@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Task Management — Prototipe klik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0EC;--surface:#FBFCFB;--ink:#17211D;--muted:#5B6862;--line:#CFD7D1;--line2:#E4E9E5;
+  --pine:#1E4D40;--pine-ink:#F2F7F4;--side:#14302A;--side-ink:#D5E3DC;--side-mut:#8FA69C;--side-act:#22493F;
+  --todo:#7C8A93;--prog:#3468D6;--done:#2C9A68;--late:#C23B2B;--wk:rgba(23,33,29,.05);--focus:#3468D6;--warn:#B7791F;
+  --tint:color-mix(in srgb,var(--ink) 4%,var(--paper));
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--paper:#0F1512;--surface:#171F1B;--ink:#E6ECE8;--muted:#9AA8A1;--line:#2C3832;--line2:#232D28;--pine:#5FB79E;--pine-ink:#0C1613;--wk:rgba(255,255,255,.05);--todo:#93A0A8;--prog:#7AA0F2;--done:#4CBE8A;--late:#EE7565;--focus:#7AA0F2;--warn:#E0A94A}
+}
+:root[data-theme="dark"]{--paper:#0F1512;--surface:#171F1B;--ink:#E6ECE8;--muted:#9AA8A1;--line:#2C3832;--line2:#232D28;--pine:#5FB79E;--pine-ink:#0C1613;--wk:rgba(255,255,255,.05);--todo:#93A0A8;--prog:#7AA0F2;--done:#4CBE8A;--late:#EE7565;--focus:#7AA0F2;--warn:#E0A94A}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque','Public Sans',system-ui,sans-serif;margin:0;font-weight:600;letter-spacing:-.01em}
+h1{font-size:26px}h2{font-size:19px}h3{font-size:15px}h4{font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+p{margin:0}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mut{color:var(--muted)}.late{color:var(--late)}.sm{font-size:12.5px}.b{font-weight:600}.r{text-align:right}
+.tn{font-variant-numeric:tabular-nums}
+#app{height:100%}
+/* shell */
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);height:100%}
+.side{background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;padding:16px 10px;overflow:auto;gap:1px}
+.brand{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:17px;padding:4px 10px 12px;color:#fff;line-height:1.15}
+.brand small{display:block;font:500 11.5px 'Public Sans',sans-serif;color:var(--side-mut);margin-top:4px}
+.ng{margin:14px 0 4px;padding:0 10px;font-size:12px;color:var(--side-mut)}
+.nav{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:none;color:var(--side-ink);border-radius:5px;text-align:left}
+.nav:hover{background:rgba(255,255,255,.06)}
+.nav.on{background:var(--side-act);color:#fff;font-weight:600}
+.nav .bd{margin-left:auto;background:#E4B34A;color:#2b2200;border-radius:9px;font-size:11px;padding:0 6px;font-weight:600}
+.sp{flex:1}
+.col{display:flex;flex-direction:column;min-width:0;min-height:0}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.top h1{font-size:21px;margin-right:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;font-size:13px}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--dc)}
+.who{margin-left:auto;display:flex;align-items:center;gap:10px}
+.who .role{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.25}
+.who .role b{display:block;color:var(--ink);font-size:13.5px}
+.main{flex:1;overflow:auto;padding:20px 24px 48px}
+.sub{color:var(--muted);margin:2px 0 16px}
+/* controls */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;line-height:1.3}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);font-weight:600}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.dng{color:var(--late);border-color:color-mix(in srgb,var(--late) 45%,var(--line))}
+.btn.s{padding:3px 9px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.lnk{background:none;border:0;padding:0;color:var(--prog);text-decoration:underline;text-underline-offset:2px}
+.in,.cell{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:6px 8px;min-width:0}
+.cell{border-color:transparent;background:transparent;padding:4px 6px;width:100%;border-radius:3px}
+.cell:hover,.cell:focus{border-color:var(--line);background:var(--surface)}
+.cell[disabled]{opacity:1;color:inherit;-webkit-text-fill-color:currentColor;cursor:default}
+textarea.in{width:100%;resize:vertical;min-height:64px}
+label.f{display:block;margin-bottom:12px;font-weight:500;font-size:13px}
+label.f .in{display:block;width:100%;margin-top:4px;font-weight:400}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>.grow{flex:1;min-width:0}
+.bar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.pad{padding:16px}
+.note{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);border-radius:5px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.note.ok{border-left-color:var(--done)}.note.er{border-left-color:var(--late)}.note.in{border-left-color:var(--prog)}
+/* chips & pills */
+.dc{display:inline-block;padding:0 7px;border-radius:4px;font-size:12px;font-weight:600;background:color-mix(in srgb,var(--dc) 16%,var(--surface));border-left:3px solid var(--dc);line-height:1.6}
+.st{display:inline-block;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid currentColor;line-height:1.55;white-space:nowrap}
+.st-todo{color:var(--todo)}.st-prog{color:var(--prog)}.st-done{color:var(--done)}.st-rev{color:#9A6B00}.st-fix{color:#B23A3A}
+.pr{font-size:12px;font-weight:600}.pr-High{color:var(--late)}.pr-Medium{color:var(--warn)}.pr-Low{color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+.tag .i{width:12px;height:12px}
+.pb{display:inline-block;width:70px;height:6px;background:var(--line2);border-radius:3px;overflow:hidden;vertical-align:middle}
+.pb i{display:block;height:100%;background:var(--prog)}
+.pb.full i{background:var(--done)}
+.av{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--mut2,#5B6862);color:#fff;font-size:10px;font-weight:600;margin-right:-5px;border:2px solid var(--surface)}
+.av.team{border-radius:5px;background:#6B5B95}
+.avs{display:inline-flex;padding-right:5px}
+/* tables */
+.tw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;min-width:1180px}
+table.t th{position:sticky;top:0;background:var(--tint);text-align:left;font-weight:600;font-size:12.5px;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+table.t td{padding:3px 8px;border-bottom:1px solid var(--line2);vertical-align:middle}
+table.t tr.dept td{background:var(--tint);font-weight:600;padding:7px 8px}
+table.t tr.par td{background:color-mix(in srgb,var(--ink) 2.5%,var(--surface))}
+table.t tr.par .ttl{font-weight:600}
+table.t tr.sub .ttl{padding-left:26px}
+table.t tr:hover td{background:color-mix(in srgb,var(--prog) 5%,var(--surface))}
+.no{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-variant-numeric:tabular-nums;min-width:32px;display:inline-block}
+.ttl button{background:none;border:0;padding:0;text-align:left;font-weight:inherit}
+.ttl button:hover{text-decoration:underline}
+.xp{background:none;border:0;padding:0 4px 0 0;color:var(--muted)}
+.xp .i{width:14px;height:14px;transition:transform .12s}.xp.open .i{transform:rotate(90deg)}
+td .num{width:64px;text-align:right}
+table.t select.cell{min-width:108px}
+table.t input[type=date].cell{min-width:136px}
+table.t td.ttl{min-width:300px}
+.xp{display:inline-flex;align-items:center;vertical-align:middle}
+td.n{white-space:nowrap}
+/* home */
+.grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.dt{width:100%;border-collapse:collapse}
+.dt th{font-weight:500;color:var(--muted);text-align:left;font-size:12.5px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.dt td{padding:9px 12px;border-bottom:1px solid var(--line2)}
+.dt tr:last-child td{border-bottom:0}
+.dt tbody tr{cursor:pointer}.dt tbody tr:hover td{background:var(--tint)}
+.grp{padding:10px 14px 4px;font-weight:600;font-size:13px;border-top:1px solid var(--line2)}
+.grp:first-child{border-top:0}
+.tk{display:flex;align-items:center;gap:10px;padding:8px 14px;border:0;background:none;width:100%;text-align:left;border-bottom:1px solid var(--line2)}
+.tk:hover{background:var(--tint)}
+.tk .tt{flex:1;min-width:0}.tk .tt div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{padding:26px 16px;text-align:center;color:var(--muted)}
+/* kanban */
+.kb{display:grid;grid-template-columns:repeat(5,minmax(250px,1fr));gap:14px;align-items:start;overflow-x:auto}
+.kc{background:var(--tint);border-radius:8px;padding:10px;min-height:220px;border:1px dashed transparent}
+.kc.over{border-color:var(--prog);background:color-mix(in srgb,var(--prog) 8%,var(--tint))}
+.kc h3{display:flex;justify-content:space-between;align-items:center;padding:2px 2px 4px}
+.kc h3 span{font-weight:400;color:var(--muted);font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--dc);border-radius:6px;padding:9px 11px;margin-top:8px;cursor:pointer}
+.card:hover{border-color:var(--muted);border-left-color:var(--dc)}
+.card[draggable=true]{cursor:grab}
+.card .cm{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px}
+.card .cm .pr{margin-left:auto}
+.card .ct{margin:5px 0 7px;font-weight:500}
+.card .cp{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.card .cp .pb{flex:1;width:auto}
+.card .cf{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12.5px}
+.card .cf .due{margin-left:auto}
+.card .mv{margin-top:6px;font-size:12.5px;color:var(--muted)}
+/* gantt */
+.gw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.gr{display:flex;min-width:max-content}
+.gl{position:sticky;left:0;z-index:2;width:300px;flex:none;background:var(--surface);border-right:1px solid var(--line);padding:0 10px;display:flex;align-items:center;gap:6px;min-height:34px;border-bottom:1px solid var(--line2);overflow:hidden}
+.gl button{background:none;border:0;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.gl button:hover{text-decoration:underline}
+.gl.gs{padding-left:30px}
+.gr.h .gl{background:var(--tint);font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line)}
+.gt{position:relative;width:728px;flex:none;min-height:34px;border-bottom:1px solid var(--line2);background-image:repeating-linear-gradient(90deg,var(--line2) 0 1px,transparent 1px 26px);align-self:stretch}
+.gt.wk::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 130px,var(--wk) 130px 182px)}
+.gh{display:flex;width:728px;flex:none;background:var(--tint);border-bottom:1px solid var(--line)}
+.gh div{width:26px;flex:none;text-align:center;font-size:11.5px;color:var(--muted);line-height:22px}
+.gh div.we.on{background:var(--wk)}.gh div.td{color:var(--surface);background:var(--late);font-weight:600}
+.gh.w div{width:182px;text-align:left;padding-left:6px;color:var(--ink);font-weight:600;border-left:1px solid var(--line)}
+.gbar{position:absolute;top:8px;height:18px;border-radius:4px;background:color-mix(in srgb,var(--dc) 22%,var(--surface));border:1px solid var(--dc);overflow:hidden;font-size:11px;line-height:16px;padding-left:5px;cursor:pointer}
+.gbar i{position:absolute;left:0;top:0;bottom:0;background:var(--dc);opacity:.85}
+.gbar span{position:relative;color:var(--ink);font-weight:600;mix-blend-mode:normal;text-shadow:0 0 3px var(--surface)}
+.gbar.gs{top:11px;height:12px;line-height:10px}.gbar.gs span{display:none}
+.gbar.late{border-color:var(--late);box-shadow:0 0 0 1px var(--late)}
+.tl{position:absolute;top:0;bottom:0;width:2px;background:var(--late);opacity:.7;z-index:1}
+/* jadwal: daftar + timeline digabung */
+.jw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.jr{display:flex;min-width:max-content}
+.jl-wrap{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line);flex:none}
+.jl{display:grid;align-items:center;min-height:34px;border-bottom:1px solid var(--line2);padding:0 6px;gap:5px;font-size:12.5px}
+.jl>div{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.jl .ttl{white-space:normal;display:flex;align-items:center;gap:4px;font-weight:500}
+.jl .cell{width:100%;min-width:0;font-size:12.5px;padding:4px 5px}
+.jl.h{background:var(--tint);font-weight:600;border-bottom:1px solid var(--line)}
+.jl.dept{display:block;background:var(--tint);font-weight:600;padding:7px 8px;grid-column:1/-1}
+.jl.sub2{display:block;padding:0 8px;font-size:12.5px;color:var(--muted);background:var(--tint);white-space:nowrap;line-height:34px}
+.jl .btn.s{padding:2px 6px}
+/* drawer & modal */
+.ov{position:fixed;inset:0;background:rgba(10,20,16,.45);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.2);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dh{display:flex;gap:10px;align-items:flex-start;padding:16px 18px 10px;border-bottom:1px solid var(--line2)}
+.dh .grow{flex:1;min-width:0}
+.dh input.ti{font:600 18px 'Bricolage Grotesque',sans-serif;width:100%;border:1px solid transparent;background:transparent;padding:2px 4px;margin:4px 0 0 -4px;border-radius:4px}
+.dh input.ti:hover,.dh input.ti:focus{border-color:var(--line);background:var(--surface)}
+.db{flex:1;overflow:auto;padding:14px 18px 30px}
+.db h4{margin:20px 0 8px}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kv label{font-size:12.5px;color:var(--muted);display:block}
+.kv .in{display:block;width:100%;margin-top:3px;color:var(--ink)}
+.pics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.atts{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.att-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--surface)}
+.att-row .lnk{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att-row button{border:0;background:none;color:var(--late);cursor:pointer;display:inline-flex}
+.permlist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.pc{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 8px;font-size:13px}
+.pc button{border:0;background:none;padding:0 4px;color:var(--muted)}
+.cmt{border-left:2px solid var(--line);padding:2px 0 2px 10px;margin:8px 0}
+.cmt small{color:var(--muted)}
+.hist{font-size:13px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--line2)}
+.stl{display:grid;grid-template-columns:28px minmax(0,1fr) 130px 100px 56px 108px;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.stl .ttl{min-width:0}
+.stl .ttl button{display:block;white-space:normal;word-break:break-word;text-align:left}
+.stl .cell{width:100%;min-width:0}
+.stl select.cell{font-size:12.5px}
+.stl-act{display:flex;gap:3px;justify-content:flex-end;align-items:center}
+.btn.s.b-todo{background:var(--todo);border-color:var(--todo);color:#fff}
+.btn.s.b-todo:hover{filter:brightness(1.08)}
+.btn.s.b-wip{background:var(--warn);border-color:var(--warn);color:#fff}
+.btn.s.b-wip:hover{filter:brightness(1.08)}
+.b-done{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;color:#fff;background:var(--done);border-radius:6px;font-weight:700;font-size:13px}
+.stl-act .btn{padding:2px 6px;line-height:1.4}
+.pcs{display:inline-flex;align-items:center;gap:2px;background:var(--tint);border-radius:10px;padding:0 5px;margin-right:2px}
+.pcs button{border:0;background:none;padding:0;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,calc(100% - 24px));max-height:calc(100% - 40px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;z-index:31;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal h2{margin-bottom:12px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.ov.m{z-index:30}
+.acc{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);background:none;padding:9px 4px}
+.acc:hover{background:var(--tint)}
+.cal{width:280px;margin:0 auto}
+.cal .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal .hd b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px}
+.cal .wd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+.cal .gd{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal .gd button{aspect-ratio:1;border:0;background:none;border-radius:6px;font-size:13px;color:var(--ink);cursor:pointer}
+.cal .gd button:hover{background:var(--tint)}
+.cal .gd button.today{box-shadow:inset 0 0 0 1px var(--prog)}
+.cal .gd button.rng{background:color-mix(in srgb,var(--pine) 16%,var(--surface))}
+.cal .gd button.sel{background:var(--pine);color:var(--pine-ink);font-weight:600}
+.cal .gd span{aspect-ratio:1}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(560px,calc(100% - 24px));pointer-events:none}
+.toast{background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:6px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.warn{background:#8a5a0a;color:#fff}.toast.er{background:#9c2e21;color:#fff}
+/* templates */
+.tpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.tp{padding:14px;display:flex;flex-direction:column;gap:8px}
+.tp ol{margin:0;padding-left:20px;color:var(--muted);font-size:13px}
+/* auth */
+.auth{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:100%}
+.hero{background:var(--side);color:var(--side-ink);padding:44px 44px 30px;display:flex;flex-direction:column;justify-content:center;gap:26px}
+.hero h1{color:#fff;font-size:34px;line-height:1.1;max-width:15em}
+.hero p{max-width:34em;color:var(--side-ink)}
+.ledger{border:1px solid rgba(255,255,255,.16);border-radius:6px;max-width:460px;font-size:13.5px}
+.ledger div{display:grid;grid-template-columns:34px 1fr auto 46px;gap:8px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.09);align-items:center}
+.ledger div:last-child{border:0}
+.ledger b{font-family:'Bricolage Grotesque',sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+.ledger .c{font-size:11.5px;padding:0 6px;border-radius:3px;border-left:3px solid var(--dc);background:rgba(255,255,255,.07)}
+.ledger em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:#fff}
+.ledger .k{padding-left:34px;color:var(--side-mut)}
+.formw{display:flex;align-items:center;justify-content:center;padding:32px 20px;background:var(--paper)}
+.fbox{width:min(400px,100%)}
+.fbox h1{margin-bottom:6px}
+.gbtn{width:100%;justify-content:center;padding:9px 12px;font-weight:500}
+.gbtn b{width:18px;height:18px;border-radius:50%;background:conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0);color:transparent;display:inline-block}
+.or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted);font-size:12.5px}
+.or::before,.or::after{content:'';height:1px;background:var(--line);flex:1}
+.err{color:var(--late);font-size:13px;min-height:18px;margin:2px 0 8px}
+.links{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.demo{margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.demo .chips{margin-top:8px}
+.otp{font:600 22px 'Bricolage Grotesque',sans-serif;letter-spacing:.3em;text-align:center}
+/* report sheet */
+.sheet{border:1px solid var(--line);border-radius:6px;overflow:auto;background:var(--surface)}
+.sheet table{border-collapse:collapse;min-width:1100px;width:100%;font-size:12.5px}
+.sheet th,.sheet td{border:1px solid var(--line2);padding:3px 7px;white-space:nowrap}
+.sheet .col-l th{background:var(--tint);color:var(--muted);text-align:center;font-weight:400;font-size:11px}
+.sheet .hd th{background:#1E6B47;color:#fff;font-weight:600;text-align:left;border-color:#18583a}
+.sheet td:first-child,.sheet .col-l th:first-child{background:var(--tint);color:var(--muted);text-align:center;width:34px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{border:0;background:none;padding:8px 14px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{border-bottom-color:var(--pine);font-weight:600}
+.sw{display:inline-flex;align-items:center;gap:8px}
+.sw input{width:16px;height:16px}
+.mtx select{min-width:96px}
+.badge{display:inline-block;font-size:12px;padding:0 7px;border-radius:4px;background:var(--tint);border:1px solid var(--line)}
+.badge.ex{border-color:var(--warn);color:var(--warn)}
+.badge.off{border-color:var(--late);color:var(--late)}
+/* android */
+.andw{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:360px;height:720px;flex:none;border:10px solid #0b0f0d;border-radius:36px;background:var(--paper);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.ph-top{padding:12px 16px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ph-top h2{font-size:18px}
+.ph-b{flex:1;overflow:auto;padding:8px 10px}
+.ph-nav{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+.ph-nav button{flex:1;border:0;background:none;padding:9px 0 7px;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted)}
+.ph-nav button.on{color:var(--pine);font-weight:600}
+.pt{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--dc);border-radius:6px;padding:9px 10px;margin:6px 0}
+.pt .ct{font-weight:500;margin:3px 0}
+.pgh{font-weight:600;font-size:13px;margin:12px 4px 2px}
+.banner{position:absolute;left:8px;right:8px;top:8px;background:#20262a;color:#fff;border-radius:12px;padding:10px 12px;z-index:5;font-size:13px;box-shadow:0 8px 22px rgba(0,0,0,.35);cursor:pointer}
+.banner small{color:#aab;display:block}
+.sheetb{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:4;display:flex;align-items:flex-end}
+.sheetp{background:var(--surface);width:100%;max-height:88%;overflow:auto;border-radius:16px 16px 0 0;padding:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:6px 0}
+.seg button{flex:1;border:0;background:none;padding:6px 0;font-size:12.5px}
+.seg button.on{background:var(--pine);color:var(--pine-ink);font-weight:600}
+input[type=range]{width:100%}
+@media (max-width:860px){
+  .shell{display:flex;flex-direction:column}
+  .side{flex-direction:row;overflow-x:auto;padding:8px;gap:4px;flex:none}
+  .brand,.ng,.sp{display:none}
+  .nav{width:auto;white-space:nowrap;padding:7px 10px}
+  .top{padding:10px 14px}.main{padding:14px 14px 40px}
+  .who{margin-left:0;width:100%;justify-content:space-between}
+  .auth{grid-template-columns:1fr}.hero{padding:26px 22px}.hero h1{font-size:26px}
+  .kv{grid-template-columns:1fr}
+  .phone{width:100%;max-width:360px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toasts" aria-live="polite"></div>
+<script>
+(()=>{
+'use strict';
+/* ================= util ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const D=s=>new Date(s+'T00:00:00');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function ymOf(s){return (s||TODAY).slice(0,7)+'-01'}
+function addMonths(ym,n){const d=D(ym);d.setMonth(d.getMonth()+n);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-01'}
+function monthMeta(ym){const d=D(ym),y=d.getFullYear(),mo=d.getMonth();return {y,mo,startWd:new Date(y,mo,1).getDay(),dim:new Date(y,mo+1,0).getDate()}}
+const addDays=(s,n)=>{const d=D(s);d.setDate(d.getDate()+n);return iso(d)};
+const diff=(a,b)=>Math.round((D(b)-D(a))/864e5);
+const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const MONF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const DAYF=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const fmt=s=>s?D(s).getDate()+' '+MON[D(s).getMonth()]+' '+D(s).getFullYear():'–';
+const fmtS=s=>s?D(s).getDate()+' '+MON[D(s).getMonth()]:'–';
+const mondayOf=s=>{const d=D(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+const fp=n=>(Math.round(n*100)/100).toString().replace('.',',')+'%';
+const hhmm=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const nowStr=()=>'21 Sep 2026, '+hhmm();
+const firstName=n=>String(n).split(' ')[0];
+const initials=n=>String(n).split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
+const ICONS={home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',kanban:'M4 4h5v16H4zM10 4h5v10h-5zM16 4h4v13h-4z',list:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',gantt:'M3 5h9M7 10h11M5 15h8M10 20h10',copy:'M9 9h11v11H9zM5 15V4h11',bell:'M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8M10 20a2 2 0 004 0',upload:'M12 16V4M7 9l5-5 5 5M4 20h16',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',users:'M16 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M9.5 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7M21 20v-2a4 4 0 00-3-3.9M16 3.1a3.5 3.5 0 010 6.8',mail:'M3 6h18v12H3zM3 7l9 7 9-7',shield:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',log:'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4',phone:'M7 2h10a1 1 0 011 1v18a1 1 0 01-1 1H7a1 1 0 01-1-1V3a1 1 0 011-1zM11 18h2',lock:'M6 11h12v9H6zM8 11V8a4 4 0 018 0v3',plus:'M12 5v14M5 12h14',chev:'M9 6l6 6-6 6',check:'M5 12l5 5 9-10',x:'M6 6l12 12M18 6L6 18',search:'M11 4a7 7 0 100 14 7 7 0 000-14M20 20l-4-4',flag:'M5 21V4h13l-3 4 3 4H5',folder:'M3 6h6l2 2h10v12H3z'};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[n]}"/></svg>`;
+const options=(list,val)=>list.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(l)}</option>`}).join('');
+function captureNewTaskForm(){
+  const m=S.modal;if(!m||m.type!=='newTask')return;
+  const g=id=>{const e=document.getElementById(id);return e?e.value:undefined};
+  if(g('nt-title')!==undefined)m.title=g('nt-title');
+  if(g('nt-dept')!==undefined)m.dept=g('nt-dept');
+  if(g('nt-prio')!==undefined)m.prio=g('nt-prio');
+  if(g('nt-s')!==undefined)m.s=g('nt-s');
+  if(g('nt-e')!==undefined)m.e=g('nt-e');
+  if(g('nt-pic-f')!==undefined)m.picText=g('nt-pic-f');
+  if(g('nt-subs')!==undefined)m.subs=g('nt-subs');
+  const resEl=document.getElementById('nt-res');if(resEl)m.res=resEl.checked;
+}
+function picField(id,cand,ph,enterA,enterId,val0){
+  const enterAttr=enterA?` data-enter="${enterA}" data-id="${esc(enterId)}"`:'';
+  return `<input class="in grow" list="dl-${id}" id="${id}" placeholder="${ph||'Ketik nama, atau nama tim bebas'}" value="${esc(val0||'')}" autocomplete="off"${enterAttr}><datalist id="dl-${id}">${cand.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>`;
+}
+function resolvePicInput(id,cand){
+  const v=val(id).trim();if(!v)return null;
+  const m=cand.find(x=>x.name.toLowerCase()===v.toLowerCase());
+  return m?{uid:m.id}:{team:v};
+}
+
+/* ================= data ================= */
+const TODAY='2026-09-21';
+const DEPTS=[{id:'IT',color:'#0E7C86',full:'Teknologi Informasi'},{id:'Admin',color:'#B7791F',full:'Administrasi'},{id:'Legal',color:'#7B4B94',full:'Hukum'},{id:'GA',color:'#B5533C',full:'General Affairs'}];
+const STAT=['To do','On Progress','Revisi','On Review','Done'];
+const PRIO=['High','Medium','Low'];
+const PROJECTS=[{id:'proj1',name:'Operasional Kantor',code:'OPS'},{id:'proj2',name:'CM',code:'CM'}];
+const projName=id=>{const p=(S.projects||PROJECTS).find(x=>x.id===id);return p?p.name:'(tanpa project)'};
+const DOMAIN='perusahaan.co.id';
+const dcol=id=>(DEPTS.find(d=>d.id===id)||{}).color||'#777';
+const defPrefs=()=>({assign:true,status:true,due:true,late:true,imp:true});
+const ROLES=['Administrator','Pengelola','Member','Guest'];
+const mkU=(id,name,email,o={})=>({id,name,email,via:o.via||'Google',role:o.role||'Member',depts:o.depts||[],admin:o.role==='Administrator',active:o.active!==false,expires:o.expires||null,last:o.last||'20 Sep 2026, 16:40',extra:[],prefs:defPrefs()});
+const users=[
+ mkU('u1','Rina Wijaya','rina.wijaya@'+DOMAIN,{role:'Administrator',last:'21 Sep 2026, 08:12'}),
+ mkU('u2','Fajar Nugroho','fajar.nugroho@'+DOMAIN,{role:'Administrator',via:'Email'}),
+ mkU('u3','Dimas Pratama','dimas.pratama@'+DOMAIN,{role:'Pengelola',depts:['IT','GA']}),
+ mkU('u4','Lestari Dewi','lestari.dewi@'+DOMAIN,{via:'Email',role:'Member',depts:['IT','GA']}),
+ mkU('u5','Sari Anggraeni','sari.anggraeni@'+DOMAIN,{role:'Pengelola',depts:['Legal']}),
+ mkU('u6','Hendra Kusuma','hendra.kusuma@'+DOMAIN,{role:'Member',depts:['Legal']}),
+ mkU('u7','Wulan Puspita','wulan.puspita@'+DOMAIN,{role:'Pengelola',depts:['Admin']}),
+ mkU('u8','Bagus Setiawan','bagus.setiawan@'+DOMAIN,{role:'Pengelola',depts:['GA','Admin']}),
+ mkU('u9','Nadia Putri','nadia.putri@'+DOMAIN,{role:'Member',depts:['Admin']}),
+ mkU('u10','Maya Tan (konsultan)','maya.tan@gmail.com',{role:'Guest',depts:['Legal'],expires:'2027-03-15'}),
+ mkU('u11','Tomi Hidayat (kontraktor)','tomi.kontraktor@gmail.com',{role:'Guest',depts:['GA'],expires:'2026-09-10'}),
+ mkU('u12','Anton Saputra','anton.saputra@'+DOMAIN,{role:'Member',depts:['IT'],active:false}),
+ mkU('u13','Putri Amelia (PMO)','putri.amelia@'+DOMAIN,{role:'Pengelola'}),
+ mkU('u14','Agus Wibowo (Direktur)','agus.wibowo@'+DOMAIN,{role:'Pengelola'})
+];
+const S={
+  screen:'login',me:null,route:'beranda',dept:'Semua',project:'Semua',err:'',modal:null,openId:null,delArm:null,picEditId:null,
+  projects:PROJECTS.map(p=>({...p})),
+  f:{pic:'',prio:'',due:'',q:'',from:'',to:''},collapsed:{},cg:{},ganttStart:mondayOf(TODAY),wkColor:true,
+  jwCols:{pic:false,progress:true,priority:true,start:true,end:true,remarks:false},
+  rep:{tab:'Laporan',period:'all'},imp:{stage:'upload',res:{},dateFmt:null},fails:0,logF:'',notifOnlyUnread:false,
+  and:{tab:'task',sheet:null,banner:null},inv:null,tmp:null,delArm:null,
+  synced:'08:05',
+  set:{weighted:false,seqOn:true,legalRestricted:true,expiry:6,twofa:true,desktopNotif:false},
+  pending:[{id:'p1',name:'Rudi Hartono',email:'rudi.hartono@gmail.com',at:'20 Sep 2026, 15:02'}],
+  invites:[
+    {id:'i1',email:'yoga.saputra@'+DOMAIN,role:'Member',by:'u8',exp:'2026-09-27',status:'Menunggu'},
+    {id:'i2',email:'kontrak.legal@gmail.com',role:'Guest',by:'u5',exp:'2026-09-25',status:'Menunggu'}
+  ],
+  batches:[],notifs:[],log:[]
+};
+const tasks=[];let ord=0,tseq=100,nseq=0,bseq=0,useq=20,lseq=0;
+const statusOf=p=>p>=100-1e-9?'Done':p>0?'On Progress':'To do';
+const kids=id=>tasks.filter(t=>t.parent===id).sort((a,b)=>a.ord-b.ord);
+const byId=id=>tasks.find(t=>t.id===id);
+const uname=id=>(users.find(u=>u.id===id)||{name:'(dihapus)'}).name;
+const isPic=id=>/^u\d+$/.test(id);
+function mk(dept,title,o={}){
+  const picArr=(o.pic||[]).map(x=>isPic(x)?{uid:x}:{team:x});
+  const t={id:'T-'+(++tseq),dept,parent:o.parent||null,project:o.parent?null:(o.project||PROJECTS[0].id),title,progress:o.p||0,status:'To do',prio:o.prio||'Medium',start:o.s||null,end:o.e||null,remarks:o.r||'',restricted:!!o.res,
+    pic:picArr,by:o.by||'u1',ord:++ord,sequential:!!o.seq,doneOn:o.done||null,
+    reviewers:(o.reviewers||[]).map(uid=>({uid,decision:null,note:'',at:null})),reviewApproved:false,reviewRounds:[],closeVia:null,
+    picHistory:picArr.length?[{from:null,to:picArr[0].uid||picArr[0].team,at:o.upd||'2026-09-19 14:20',by:o.by||'u1'}]:[],
+    comments:[],history:[],attachments:[],batch:o.batch||null,upd:o.upd||'2026-09-19 14:20'};
+  t.status=statusOf(t.progress);tasks.push(t);return t.id;
+}
+(function seed(){
+  let p=mk('IT','Migrasi server email ke cloud',{prio:'High',pic:['u3'],r:'Menunggu jendela maintenance dari vendor',by:'u3'});
+  mk('IT','Backup seluruh mailbox',{parent:p,p:100,pic:['u4'],s:'2026-09-14',e:'2026-09-18',done:'2026-09-18'});
+  mk('IT','Konfigurasi DNS dan MX record',{parent:p,p:60,pic:['u4'],s:'2026-09-21',e:'2026-09-25'});
+  mk('IT','Uji coba dengan 10 pengguna pilot',{parent:p,pic:['u3'],s:'2026-09-28',e:'2026-10-01'});
+  mk('IT','Cutover seluruh pengguna',{parent:p,pic:['u3'],s:'2026-10-02',e:'2026-10-02'});
+  p=mk('IT','Penggantian smart lock ruang server',{prio:'Medium',pic:['u3','u4'],seq:true,r:'Urutan wajib aktif: instalasi menunggu unit tiba',by:'u3'});
+  mk('IT','Survei kebutuhan dan vendor',{parent:p,p:100,pic:['u3'],s:'2026-09-08',e:'2026-09-11',done:'2026-09-11'});
+  mk('IT','Pengadaan unit smart lock',{parent:p,p:50,pic:['u4'],s:'2026-09-14',e:'2026-09-18',r:'Vendor terlambat kirim'});
+  mk('IT','Instalasi di ruang server',{parent:p,pic:['u4'],s:'2026-09-28',e:'2026-09-30'});
+  mk('IT','Registrasi kartu akses dan uji coba',{parent:p,pic:['u3'],s:'2026-10-01',e:'2026-10-02'});
+  mk('IT','Perpanjangan lisensi antivirus',{p:100,pic:['Abdipay team'],s:'2026-09-14',e:'2026-09-21',done:TODAY,prio:'Medium'});
+  mk('IT','Audit hak akses aplikasi internal',{prio:'Low',pic:['u4'],s:'2026-10-05',e:'2026-10-16'});
+  p=mk('Admin','Pembaruan data karyawan tetap 2026',{prio:'Medium',pic:['u7'],by:'u7'});
+  mk('Admin','Kumpulkan formulir dari semua divisi',{parent:p,p:100,pic:['u9'],s:'2026-09-07',e:'2026-09-16',done:'2026-09-16'});
+  mk('Admin','Input ke sistem HR',{parent:p,p:45,pic:['u9'],s:'2026-09-17',e:'2026-09-25'});
+  mk('Admin','Verifikasi ganda oleh Manager',{parent:p,pic:['u7'],s:'2026-09-28',e:'2026-10-02'});
+  mk('Admin','Pengadaan ATK kuartal IV',{p:30,prio:'Low',pic:['u9'],s:'2026-09-21',e:'2026-09-30'});
+  p=mk('Admin','Perjalanan dinas direksi Oktober',{prio:'High',pic:['u7'],by:'u7',r:'Menunggu konfirmasi jadwal dari sekretaris direksi'});
+  mk('Admin','Pesan tiket pesawat',{parent:p,p:100,pic:['u9'],s:'2026-09-15',e:'2026-09-18',done:'2026-09-18'});
+  mk('Admin','Reservasi hotel dan transportasi',{parent:p,pic:['u9'],s:'2026-09-22',e:'2026-09-30'});
+  mk('Admin','Susun itinerari dan dokumen perjalanan',{parent:p,pic:['u7'],s:'2026-10-01',e:'2026-10-06'});
+  p=mk('Legal','Review kontrak vendor katering',{prio:'High',pic:['u5'],by:'u5'});
+  mk('Legal','Telaah klausul pembayaran',{parent:p,p:100,pic:['u6'],s:'2026-09-10',e:'2026-09-16',done:'2026-09-16'});
+  mk('Legal','Redline draf kontrak',{parent:p,p:50,pic:['u6'],s:'2026-09-17',e:'2026-09-22'});
+  mk('Legal','Negosiasi dengan vendor',{parent:p,pic:['u5'],s:'2026-09-24',e:'2026-10-07'});
+  p=mk('Legal','Pembaruan perizinan operasional',{prio:'Medium',pic:['u6'],by:'u5'});
+  mk('Legal','Cek masa berlaku semua izin',{parent:p,p:40,pic:['u6'],s:'2026-09-14',e:'2026-09-25'});
+  mk('Legal','Ajukan perpanjangan ke instansi',{parent:p,pic:['u6'],s:'2026-09-28',e:'2026-10-30'});
+  p=mk('Legal','Sengketa lahan Cikarang',{prio:'High',pic:['u5','u6'],res:true,by:'u5',r:'Hanya untuk PIC, Pengelola, dan Administrator'});
+  mk('Legal','Kumpulkan dokumen sertifikat',{parent:p,p:70,pic:['u6'],s:'2026-09-14',e:'2026-09-30'});
+  mk('Legal','Konsultasi dengan kuasa hukum eksternal',{parent:p,pic:['u5'],s:'2026-10-01',e:'2026-10-09'});
+  p=mk('GA','Renovasi ruang rapat lantai 3',{prio:'High',pic:['u8'],by:'u8'});
+  mk('GA','Pemilihan kontraktor',{parent:p,p:100,pic:['u8'],s:'2026-09-01',e:'2026-09-08',done:'2026-09-08'});
+  mk('GA','Pengerjaan interior',{parent:p,p:40,pic:['u8'],s:'2026-09-09',e:'2026-09-30'});
+  mk('GA','Serah terima dan pembersihan',{parent:p,pic:['u8'],s:'2026-10-05',e:'2026-10-09'});
+  mk('GA','Servis rutin armada kendaraan',{p:100,pic:['u8'],s:'2026-09-15',e:'2026-09-19',done:'2026-09-19',prio:'Medium'});
+  p=mk('GA','Audit inventaris aset kantor',{prio:'Low',pic:['u8','u3'],by:'u8'});
+  mk('GA','Hitung fisik lantai 1 dan 2',{parent:p,p:100,pic:['u3'],s:'2026-09-21',e:'2026-09-21',done:TODAY});
+  mk('GA','Hitung fisik lantai 3 dan 4',{parent:p,pic:['u8'],s:'2026-09-22',e:'2026-10-02'});
+  p=mk('GA','Pembelian CCTV',{prio:'Medium',pic:['u3'],by:'u3',project:'proj2'});
+  mk('GA','Request Form',{parent:p,p:100,pic:['u3'],s:'2026-09-10',e:'2026-09-12',done:'2026-09-12'});
+  mk('GA','Pemasangan',{parent:p,pic:['u4'],s:'2026-09-25',e:'2026-10-01'});
+  tasks.find(t=>t.title==='Sengketa lahan Cikarang').project='proj2';
+  tasks.find(t=>t.title==='Renovasi ruang rapat lantai 3').project='proj2';
+  tasks.filter(t=>!t.parent).forEach(t=>recalc(t.id,true));
+  (function(){
+    const a=tasks.find(t=>t.title==='Audit hak akses aplikasi internal');
+    a.status='On Review';a.progress=80;a.reviewers=[{uid:'u3',decision:null,note:'',at:null},{uid:'u14',decision:null,note:'',at:null}];a.reviewApproved=false;
+    a.history.push({at:'20 Sep 2026, 14:00',who:'Lestari Dewi',text:'Diajukan untuk review'});
+    const b=tasks.find(t=>t.title==='Cek masa berlaku semua izin');
+    b.status='On Review';b.progress=100;b.reviewers=[{uid:'u13',decision:'accept',note:'',at:'19 Sep 2026, 15:40'},{uid:'u14',decision:'accept',note:'',at:'19 Sep 2026, 16:05'}];b.reviewApproved=true;
+    b.history.push({at:'19 Sep 2026, 11:20',who:'Hendra Kusuma',text:'Diajukan untuk review'});
+    b.history.push({at:'19 Sep 2026, 15:40',who:'Putri Amelia (PMO)',text:'Putri Amelia (PMO) menyetujui review'});
+    b.history.push({at:'19 Sep 2026, 16:05',who:'Agus Wibowo (Direktur)',text:'Agus Wibowo (Direktur) menyetujui review'});
+  })();
+  const idOf=n=>tasks.find(t=>t.title===n).id;
+  tasks.find(t=>t.title==='Migrasi server email ke cloud').comments.push({uid:'u4',text:'Backup selesai. DNS masih menunggu konfirmasi vendor.',at:'18 Sep, 16:05'});
+  tasks.find(t=>t.title==='Migrasi server email ke cloud').history.push({at:'14 Sep 2026, 09:10',who:'Dimas Pratama',text:'Membuat task'});
+  const N=(uid,type,title,text,at)=>S.notifs.push({id:'n'+(++nseq),uid,type,tid:idOf(title),text,at,read:false});
+  N('u3','assign','Migrasi server email ke cloud','Kamu ditugaskan pada "Migrasi server email ke cloud"','14 Sep, 09:10');
+  N('u3','due','Konfigurasi DNS dan MX record','Tenggat dalam 4 hari: Konfigurasi DNS dan MX record','21 Sep, 07:00');
+  N('u3','late','Pengadaan unit smart lock','Lewat tenggat: Pengadaan unit smart lock (18 Sep)','21 Sep, 07:00');
+  N('u4','late','Pengadaan unit smart lock','Lewat tenggat: Pengadaan unit smart lock (18 Sep)','21 Sep, 07:00');
+  N('u4','due','Konfigurasi DNS dan MX record','Tenggat dalam 4 hari: Konfigurasi DNS dan MX record','21 Sep, 07:00');
+  N('u6','due','Redline draf kontrak','Tenggat besok: Redline draf kontrak','21 Sep, 07:00');
+  N('u5','status','Telaah klausul pembayaran','Hendra Kusuma menyelesaikan "Telaah klausul pembayaran"','16 Sep, 15:40');
+  N('u7','due','Input ke sistem HR','Tenggat dalam 4 hari: Input ke sistem HR','21 Sep, 07:00');
+  N('u8','assign','Audit inventaris aset kantor','Kamu ditugaskan pada "Audit inventaris aset kantor"','19 Sep, 10:22');
+  N('u9','status','Reservasi hotel dan transportasi','Tenggat dalam 1 hari: Reservasi hotel dan transportasi','21 Sep, 07:00');
+  N('u1','status','Perpanjangan lisensi antivirus','Abdipay team menyelesaikan "Perpanjangan lisensi antivirus"','21 Sep, 09:30');
+  [['login','Rina Wijaya','Login','Rina Wijaya masuk dengan Google','21 Sep 2026, 08:12'],['role','Rina Wijaya','Perubahan role','Dimas Pratama: Member GA ditambahkan','18 Sep 2026, 11:03'],['undangan','Bagus Setiawan','Undangan','Undangan dikirim ke yoga.saputra@'+DOMAIN,'21 Sep 2026, 08:40'],['import','Wulan Puspita','Import','Import 14 baris (Admin) selesai, batch B-001','15 Sep 2026, 13:22'],['task','Sari Anggraeni','Ubah task terbatas','Sengketa lahan Cikarang: PIC ditambah Hendra Kusuma','17 Sep 2026, 10:15'],['akses','Fajar Nugroho','Akses','Akses Anton Saputra dinonaktifkan','12 Sep 2026, 17:01']].forEach(l=>S.log.push({k:l[0],who:l[1],action:l[2],target:l[3],at:l[4]}));
+  S.batches.push({id:'B-001',file:'admin_agustus.xlsx',by:'Wulan Puspita',at:'15 Sep 2026, 13:22',tasks:5,subs:9,status:'Aktif (sudah lama)',locked:true});
+})();
+const TEMPLATES=[
+ {id:'tp1',name:'Penggantian smart lock',dept:'IT',seq:true,prio:'Medium',subs:[['Survei kebutuhan dan vendor',3],['Pengadaan unit',7],['Instalasi di lokasi',2],['Registrasi kartu akses dan uji coba',2]]},
+ {id:'tp2',name:'Onboarding karyawan baru',dept:'IT',seq:false,prio:'Medium',subs:[['Siapkan laptop dan akun email',2],['Buat akses aplikasi internal',2],['Sesi orientasi keamanan data',1]]},
+ {id:'tp3',name:'Perpanjangan kontrak vendor',dept:'Legal',seq:true,prio:'High',subs:[['Telaah kontrak berjalan',3],['Draf addendum',4],['Persetujuan pihak vendor',5],['Penandatanganan',2]]},
+ {id:'tp4',name:'Perjalanan dinas',dept:'Admin',seq:false,prio:'Medium',subs:[['Pesan tiket',3],['Reservasi hotel dan transportasi',3],['Susun itinerari dan dokumen',2]]},
+ {id:'tp5',name:'Audit inventaris aset',dept:'GA',seq:false,prio:'Low',subs:[['Hitung fisik per lantai',5],['Rekonsiliasi dengan daftar aset',3],['Laporan selisih',2]]}
+];
+const IMPORT_ROWS=[
+ {r:2,dept:'IT',no:'1',task:'Peremajaan switch jaringan lantai 2',pic:'Dimas Pratama',progress:0,status:'To do',prio:'High',start:'2026-10-05',end:'2026-10-16',remarks:'Anggaran sudah disetujui'},
+ {r:3,dept:'IT',no:'1.1',task:'Inventarisasi perangkat lama',pic:'Lestari Dewi',progress:100,status:'Done',start:'2026-09-14',end:'2026-09-18',remarks:''},
+ {r:4,dept:'IT',no:'1.2',task:'Pasang dan konfigurasi switch baru',pic:'Lestari D.',progress:0,status:'To do',start:'2026-10-06',end:'2026-10-14',remarks:''},
+ {r:5,dept:'IT',no:'3.1',task:'Dokumentasikan topologi jaringan',pic:'Dimas Pratama',progress:0,status:'To do',start:'2026-10-15',end:'2026-10-20',remarks:''},
+ {r:6,dept:'IT',no:'2',task:'Pembaruan sertifikat SSL website',pic:'Abdipay team',progress:50,status:'Done',prio:'Medium',start:'2026-09-28',end:'2026-10-02',remarks:''},
+ {r:7,dept:'Admin',no:'1',task:'Rekonsiliasi kartu BBM kendaraan operasional',pic:'Wulan Puspita',progress:20,status:'On Progress',prio:'Low',start:'05/10/2026',end:'09/10/2026',remarks:''},
+ {r:8,dept:'Legal',no:'1',task:'Review perjanjian kerahasiaan mitra',pic:'Hendra Kusuma',progress:0,status:'To do',prio:'High',start:'2026-10-01',end:'2026-10-08',remarks:''},
+ {r:9,dept:'IT',no:'',id:'Audit hak akses aplikasi internal',task:'Audit hak akses aplikasi internal',pic:'Lestari Dewi',progress:25,status:'On Progress',prio:'Low',start:'2026-10-05',end:'2026-10-16',remarks:'Diperbarui lewat import (kolom ID terisi)'}
+];
+IMPORT_ROWS.forEach(r=>{if(r.id){const t=tasks.find(x=>x.title===r.id);r.id=t?t.id:null}});
+
+/* ================= logic ================= */
+const me=()=>users.find(u=>u.id===S.me);
+const isExt=u=>!u.email.endsWith('@'+DOMAIN);
+const isMgr=(u,d)=>u.admin||u.role==='Pengelola';
+const anyMgr=u=>u.admin||u.role==='Pengelola';
+const canDept=()=>true;
+const myDepts=()=>DEPTS;
+const picIds=t=>t.pic.filter(p=>p.uid).map(p=>p.uid);
+const rootOf=t=>t.parent?byId(t.parent):t;
+const projectOf=t=>rootOf(t).project;
+const PERMLBL={view:'Lihat',comment:'Komentar',progress:'Ubah progress',edit:'Ubah semua'};
+const PERMLV=['view','comment','progress','edit'];
+function permLevel(t,uid){
+  const r=rootOf(t);let best=-1;
+  [t,r].forEach(x=>{const p=(x.perms||[]).find(pp=>pp.uid===uid);if(p){const i=PERMLV.indexOf(p.level);if(i>best)best=i}});
+  return best<0?null:PERMLV[best];
+}
+function hasPerm(t,uid,min){const lv=permLevel(t,uid);return lv!=null&&PERMLV.indexOf(lv)>=PERMLV.indexOf(min)}
+function canSeeFull(t){
+  const u=me();if(!u)return false;
+  if(u.admin||u.role==='Pengelola')return true;
+  const r=rootOf(t);
+  if(r.restricted){
+    return picIds(r).includes(u.id)||kids(r.id).some(k=>picIds(k).includes(u.id))||hasPerm(t,u.id,'view');
+  }
+  if(u.role==='Guest')return true;
+  if(picIds(t).includes(u.id)||t.by===u.id)return true;
+  if(!t.parent&&kids(t.id).some(k=>picIds(k).includes(u.id)))return true;
+  return hasPerm(t,u.id,'view');
+}
+function canSee(t){
+  const u=me();if(!u)return false;
+  if(canSeeFull(t))return true;
+  if(u.role!=='Member')return false;
+  const r=rootOf(t);
+  if(r.restricted)return false;
+  if(t.parent)return picIds(r).includes(u.id)||kids(r.id).some(k=>picIds(k).includes(u.id));
+  return false;
+}
+function canEditLocked(t){
+  const u=me();if(!u)return false;
+  if(rootOf(t).status==='Done')return false;
+  if(u.admin||u.role==='Pengelola')return true;
+  if(!t.parent&&t.by===u.id&&picIds(t).includes(u.id))return true;
+  return false;
+}
+function canEdit(t){
+  const u=me();if(!u)return false;
+  if(rootOf(t).status==='Done')return false;
+  if(u.admin||u.role==='Pengelola')return true;
+  if(u.role==='Member'){if(picIds(t).includes(u.id)||(t.parent&&picIds(byId(t.parent)).includes(u.id))||t.by===u.id)return true}
+  return hasPerm(t,u.id,'edit');
+}
+function canEditProg(t){const u=me();if(!u||canEdit(t))return false;return hasPerm(t,u.id,'progress')}
+function canCreateTask(u){u=u||me();return !!u&&(u.admin||u.role==='Pengelola')}
+function canCreateSelfTask(u){u=u||me();return !!u&&(canCreateTask(u)||u.role==='Member')}
+function selfOnlyCreate(u){u=u||me();return !canCreateTask(u)&&canCreateSelfTask(u)}
+const canCreate=()=>canCreateTask(me());
+const reviewersOf=t=>t.reviewers||[];
+const allDecided=t=>{const r=reviewersOf(t);return r.length>0&&r.every(x=>x.decision)};
+const allAccepted=t=>allDecided(t)&&reviewersOf(t).every(x=>x.decision==='accept');
+const anyRejected=t=>reviewersOf(t).some(x=>x.decision==='reject');
+const reviewProgress=t=>{const r=reviewersOf(t);return r.filter(x=>x.decision).length+'/'+r.length};
+function isPMO(u){u=u||me();return !!u&&(u.admin||u.role==='Pengelola')}
+function canSubmitReview(t){const u=me();return !!u&&(u.admin||picIds(t).includes(u.id))}
+const fmtSize=b=>b<1024?b+' B':b<1024*1024?(b/1024).toFixed(1)+' KB':(b/1024/1024).toFixed(1)+' MB';
+const canComment=t=>{const u=me();return u.admin||['Pengelola','Member'].includes(u.role)||hasPerm(t,me().id,'comment')};
+const vis=()=>tasks.filter(canSee);
+const scoped=()=>vis().filter(t=>S.dept==='Semua'||t.dept===S.dept);
+const isLate=t=>t.status!=='Done'&&t.end&&t.end<TODAY;
+const lateFlag=t=>isLate(t)||kids(t.id).some(isLate);
+let NUM={};
+function buildNum(){
+  const m={};
+  (S.projects||PROJECTS).forEach(pr=>{
+    tasks.filter(t=>!t.parent&&projectOf(t)===pr.id).sort((a,b)=>a.ord-b.ord).forEach((p,i)=>{
+      m[p.id]=pr.code+'-'+(i+1);
+      kids(p.id).forEach((c,j)=>m[c.id]=pr.code+'-'+(i+1)+'.'+(j+1));
+    });
+  });
+  return m;
+}
+function recalc(pid,quiet){
+  const p=byId(pid);if(!p)return;const ch=kids(pid);if(!ch.length)return;
+  let pr;
+  if(S.set.weighted){
+    const w=ch.map(c=>Math.max(1,diff(c.start,c.end)+1));
+    const doneW=ch.reduce((a,c,i)=>a+(c.status==='Done'?w[i]:0),0);
+    pr=doneW/w.reduce((a,b)=>a+b,0)*100;
+  }else{
+    const done=ch.filter(c=>c.status==='Done').length;
+    pr=done/ch.length*100;
+  }
+  p.progress=Math.round(pr*100)/100;
+  if(!['On Review','Revisi','Done'].includes(p.status)){
+    p.status=pr<=0?'To do':'On Progress';
+  }
+  p.doneOn=null;
+  p.start=ch.map(c=>c.start).filter(Boolean).sort()[0]||p.start;
+  p.end=ch.map(c=>c.end).filter(Boolean).sort().pop()||p.end;
+}
+function lockedBy(t){
+  if(!t.parent||!S.set.seqOn)return null;const p=byId(t.parent);if(!p.sequential)return null;
+  const sib=kids(p.id);const i=sib.findIndex(x=>x.id===t.id);
+  for(let j=0;j<i;j++)if(sib[j].progress<100)return (NUM[sib[j].id]||'')+' '+sib[j].title;
+  return null;
+}
+function notifyNextUnlocked(t){
+  if(!t.parent)return;
+  const p=byId(t.parent);
+  if(!S.set.seqOn||!p.sequential)return;
+  const sib=kids(p.id),i=sib.findIndex(x=>x.id===t.id),nx=sib[i+1];
+  if(!nx||nx.progress>=100||lockedBy(nx)||nx.status!=='To do'||!picIds(nx).length)return;
+  notify('assign',nx,`Giliran kamu: "${nx.title}" sudah bisa dikerjakan (sub task sebelumnya sudah selesai).`,picIds(nx));
+  logEv('task','Notifikasi giliran sub task berikutnya',`${nx.dept}: ${nx.title}`,me()?me().name:'Sistem');
+}
+const touch=t=>{t.upd=TODAY+' '+hhmm();S.synced=hhmm()};
+const hist=(t,text)=>{t.history.unshift({at:nowStr(),who:me()?me().name:'Sistem',text});touch(t)};
+function logEv(k,action,target,who){S.log.unshift({k,who:who||(me()?me().name:'Sistem'),action,target,at:nowStr()})}
+function toast(msg,kind){
+  const el=document.createElement('div');el.className='toast '+(kind||'');el.textContent=msg;$('#toasts').appendChild(el);
+  setTimeout(()=>el.remove(),kind?4200:3200);
+}
+const deny=()=>toast('Kamu tidak punya hak untuk mengubah ini. (Di aplikasi asli, pembatasan ini dicek di server.)','er');
+function playBeep(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=880;
+    g.gain.setValueAtTime(0.15,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.35);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+0.35);
+  }catch(e){}
+}
+function desktopNotify(text){
+  if(!S.set.desktopNotif)return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  try{new Notification('Task Management',{body:text})}catch(e){}
+  playBeep();
+}
+function notify(type,t,text,recips){
+  const seen=new Set(),sent=[];
+  recips.forEach(id=>{
+    if(!id||seen.has(id)||id===S.me)return;seen.add(id);
+    const u=users.find(x=>x.id===id);if(!u||!u.active||u.prefs[type]===false)return;
+    S.notifs.unshift({id:'n'+(++nseq),uid:id,type,tid:t?t.id:null,text,at:'21 Sep, '+hhmm(),read:false});sent.push(firstName(u.name));
+  });
+  if(sent.length){toast('Push terkirim ke '+sent.join(', ')+' dan masuk kotak notifikasi (simulasi).');desktopNotify(text)}
+}
+const mgrIds=()=>users.filter(u=>u.admin||u.role==='Pengelola').map(u=>u.id);
+function doSubmitReview(d){
+  const t=byId(d.id),u=me();
+  if(!canSubmitReview(t))return deny();
+  const wasRevisi=t.status==='Revisi';
+  if(wasRevisi&&reviewersOf(t).length){
+    t.reviewRounds=t.reviewRounds||[];
+    t.reviewRounds.push({at:nowStr(),reviewers:t.reviewers.map(r=>({...r}))});
+    t.reviewers=t.reviewers.map(r=>({uid:r.uid,decision:null,note:'',at:null}));
+  }
+  const old=t.status;t.status='On Review';
+  if(!reviewersOf(t).length){
+    const old2=t.status;t.status='Done';t.progress=100;t.reviewApproved=true;
+    afterChange(t,old2,'Diajukan untuk review — tidak ada reviewer, langsung Done, menunggu closing PMO');
+    logEv('review','Diajukan langsung ke Done (tanpa reviewer), menunggu closing PMO',`${t.dept}: ${t.title}`,u.name);
+    notify('assign',t,`"${t.title}" sudah Done (tanpa reviewer), menunggu closing PMO`,[...picIds(t),...users.filter(x=>x.pmo).map(x=>x.id)]);
+    S.modal=null;render();toast('Diajukan — tidak ada reviewer, langsung Done, menunggu closing PMO.');
+    return;
+  }
+  t.reviewApproved=false;
+  afterChange(t,old,wasRevisi?'Diajukan ulang untuk review setelah revisi':'Diajukan untuk review');
+  logEv('review',wasRevisi?'Diajukan ulang untuk review':'Diajukan untuk review',`${t.dept}: ${t.title}`,u.name);
+  reviewersOf(t).forEach(r=>notify('assign',t,`${u.name} mengajukan "${t.title}" untuk kamu review`,[r.uid]));
+  S.modal=null;render();toast('Diajukan untuk review.');
+}
+function doReviewDecide(d){
+  const t=byId(d.id),u=me();
+  const r=reviewersOf(t).find(x=>x.uid===u.id);
+  if(!r&&!u.admin)return deny();
+  const target=r||reviewersOf(t)[0];
+  if(target&&target.decision)return toast('Kamu sudah memutuskan untuk task ini.','warn');
+  let note='';
+  if(d.dec==='reject'){
+    note=val('rj-note-'+d.id).trim();
+    if(!note){document.getElementById('rj-err').textContent='Catatan alasan wajib diisi.';return}
+  }
+  target.decision=d.dec;target.note=note;target.at=nowStr();
+  hist(t,`${u.name} ${d.dec==='accept'?'menyetujui':'menolak'} review${note?': '+note:''}`);
+  logEv('review',d.dec==='accept'?'Reviewer menyetujui':'Reviewer menolak',`${t.dept}: ${t.title} — ${u.name}`,u.name);
+  if(allDecided(t)){
+    if(allAccepted(t)){
+      const old2=t.status;t.status='Done';t.progress=100;t.reviewApproved=true;
+      afterChange(t,old2,'Semua reviewer menyetujui, task Done, menunggu closing PMO');
+      logEv('review','Semua reviewer menyetujui, task Done, menunggu closing PMO',`${t.dept}: ${t.title}`,u.name);
+      notify('assign',t,`"${t.title}" sudah Done, menunggu closing PMO`,[...picIds(t),...users.filter(x=>x.pmo).map(x=>x.id)]);
+    }else{
+      const old=t.status;t.status='Revisi';t.reviewApproved=false;
+      afterChange(t,old,'Ditolak salah satu reviewer, masuk Revisi');
+      logEv('review','Task masuk Revisi (ada reviewer menolak)',`${t.dept}: ${t.title}`,u.name);
+      notify('status',t,`"${t.title}" perlu direvisi (ada reviewer yang menolak)`,picIds(t));
+    }
+  }
+  S.modal=null;render();toast('Keputusan tersimpan.');
+}
+function afterChange(t,oldStatus,label){
+  if(t.parent)recalc(t.parent);
+  hist(t,label);
+  if(t.parent){const p=byId(t.parent);hist(p,'Progress dihitung ulang dari sub task: '+fp(p.progress))}
+  if(t.status!==oldStatus){
+    const p=t.parent?byId(t.parent):null;
+    notify('status',t,`${me().name} mengubah "${t.title}" menjadi ${t.status}`,[...picIds(t),...(p?picIds(p):[]),...mgrIds(t.dept)]);
+  }
+}
+function applyField(id,field,val){
+  const t=byId(id);if(!t)return;
+  const stop=(msg)=>{toast(msg,'warn');render()};
+  const full=canEdit(t),progOnly=!full&&['progress','status'].includes(field)&&canEditProg(t);
+  if(!full&&!progOnly){deny();render();return}
+  const auto=kids(id).length>0;const old=t.status;
+  if(['progress','status','start','end'].includes(field)&&auto)return stop('Task induk dihitung otomatis dari sub task. Ubah lewat sub task.');
+  if(['progress','status'].includes(field)){const l=lockedBy(t);if(l)return stop('Terkunci: selesaikan '+l+' lebih dulu (urutan wajib).')}
+  if(field==='progress'&&t.status==='On Review')return stop('Task sedang direview, progress tidak bisa diubah sampai review selesai.');
+  if(field==='progress'){
+    let n=Number(String(val).replace(',','.'));if(!isFinite(n))return;n=Math.max(0,Math.min(100,n));
+    if(n===t.progress)return;const was=t.progress;t.progress=n;
+    const newStatus=t.parent?statusOf(n):(n<=0?'To do':'On Progress');
+    if(newStatus==='Done'&&old!=='Done')t.doneOn=TODAY;if(newStatus!=='Done')t.doneOn=null;t.status=newStatus;
+    if(newStatus==='Done'&&old!=='Done')notifyNextUnlocked(t);
+    afterChange(t,old,`Progress ${fp(was)} → ${fp(n)}${t.status!==old?', status '+old+' → '+t.status:''}`);
+  }else if(field==='status'){
+    if(val===t.status)return;
+    if(t.status==='On Review')return stop('Task sedang direview. Gunakan tombol Accept/Reject (reviewer) atau Closing (PMO).');
+    if(t.status==='Revisi')return stop('Task perlu diajukan ulang lewat tombol "Ajukan ulang untuk Review", bukan diubah langsung.');
+    if(!t.parent&&val==='Done')return stop('Status Done hanya lewat closing PMO setelah semua reviewer menyetujui.');
+    if(val==='Revisi')return stop('Status Revisi hanya terjadi otomatis kalau ada reviewer yang menolak.');
+    if(val==='On Review'){
+      if(t.parent)return stop('Sub task tidak melalui review. Selesaikan semua sub task, lalu ajukan review dari task induknya.');
+      return submitReview({id:t.id});
+    }
+    let n=t.progress;
+    if(val==='To do')n=0;else if(val==='Done')n=100;else if(n<=0||n>=100)n=50;
+    const was=t.progress;t.progress=n;t.doneOn=val==='Done'?TODAY:null;t.status=val;
+    if(val==='Done'&&old!=='Done')notifyNextUnlocked(t);
+    afterChange(t,old,`Status ${old} → ${val} (progress ${fp(was)} → ${fp(n)})`);
+  }else if(field==='start'||field==='end'){
+    const s=field==='start'?val:t.start,e=field==='end'?val:t.end;
+    if(!val)return stop('Tanggal tidak boleh kosong.');
+    if(s&&e&&e<s)return stop('Tanggal End tidak boleh sebelum Start.');
+    t[field]=val;if(t.parent)recalc(t.parent);hist(t,`${field==='start'?'Start':'End'} diubah ke ${fmt(val)}`);
+  }else if(field==='title'){
+    const v=String(val).trim();if(!v||v===t.title)return;hist(t,`Judul diubah dari "${t.title}"`);t.title=v;
+  }else if(field==='remarks'){
+    if(val===t.remarks)return;t.remarks=val;hist(t,'Remarks diperbarui');
+  }else if(field==='prio'){
+    if(t.parent)return;if(val===t.prio)return;hist(t,`Prioritas ${t.prio} → ${val}`);t.prio=val;
+  }else if(field==='restricted'){
+    if(!isMgr(me(),t.dept))return deny();t.restricted=!!val;hist(t,t.restricted?'Ditandai Terbatas':'Tanda Terbatas dicabut');
+    logEv('task',t.restricted?'Tandai task terbatas':'Cabut tanda terbatas',`${t.dept}: ${t.title}`);
+  }else if(field==='sequential'){
+    t.sequential=!!val;hist(t,t.sequential?'Urutan wajib diaktifkan':'Urutan wajib dimatikan');
+  }
+  if(t.restricted)logEv('task','Ubah task terbatas',`${t.dept}: ${t.title}`);
+  render();
+}
+function newTask(o){
+  const par=o.parent?byId(o.parent):null;
+  const id=mk(o.dept,o.title,{parent:o.parent,pic:o.pic,s:o.start,e:o.end,prio:par?par.prio:o.prio,res:par?false:o.res,by:S.me,r:o.remarks,upd:TODAY+' '+hhmm(),seq:o.seq,project:o.project,reviewers:o.reviewers});
+  const t=byId(id);t.history.push({at:nowStr(),who:me().name,text:'Membuat '+(par?'sub task':'task')});
+  if(par)recalc(par.id);touch(t);
+  notify('assign',t,`Kamu ditugaskan pada "${t.title}"`,picIds(t));
+  return t;
+}
+function loginAs(id){
+  const u=users.find(x=>x.id===id);
+  if(!u.active)return fail('Akun ini sudah dinonaktifkan. Hubungi Administrator.');
+  if(u.expires&&u.expires<TODAY)return fail('Akses akun ini berakhir pada '+fmt(u.expires)+'. Minta Administrator memperpanjang.');
+  if(u.admin&&S.set.twofa){S.tmp=id;S.screen='twofa';S.err='';render();return}
+  enter(id);
+}
+function fail(m){S.err=m;S.modal=null;S.screen='login';render()}
+function enter(id){
+  S.me=id;S.screen='app';S.route='beranda';S.dept='Semua';S.modal=null;S.openId=null;S.err='';
+  const u=me();u.last=nowStr();logEv('login','Login',u.name+' masuk',u.name);render();
+}
+function allowed(r){
+  const u=me();
+  if(['pengguna','role','log','pengaturan','project','undangan'].includes(r))return u.admin;
+  if(r==='import')return anyMgr(u);
+  return true;
+}
+const unread=()=>S.notifs.filter(n=>n.uid===S.me&&!n.read).length;
+const lastAdmin=u=>u.admin&&users.filter(x=>x.admin&&x.active).length<=1;
+
+/* ================= small views ================= */
+const dchip=d=>`<span class="dc" style="--dc:${dcol(d)}">${esc(d)}</span>`;
+const stcls=s=>s==='Done'?'st-done':s==='On Review'?'st-rev':s==='Revisi'?'st-fix':s==='On Progress'?'st-prog':'st-todo';
+const spill=s=>`<span class="st ${stcls(s)}">${s}</span>`;
+const pbar=p=>`<span class="pb ${p>=100?'full':''}"><i style="width:${Math.min(100,p)}%"></i></span>`;
+const avatar=p=>p.team?`<span class="av team" title="${esc(p.team)}">${esc(p.team.slice(0,2))}</span>`:`<span class="av" style="background:hsl(${hue(p.uid)} 32% 38%)" title="${esc(uname(p.uid))}">${initials(uname(p.uid))}</span>`;
+const picNames=t=>t.pic.map(p=>p.team||uname(p.uid)).join(', ')||'–';
+function roleLabel(u){
+  return u.role+(u.depts&&u.depts.length?' · '+u.depts.join(', '):'');
+}
+function dueLabel(t){
+  if(!t.end)return '–';
+  const d=diff(TODAY,t.end);
+  if(t.status==='Done')return fmtS(t.end);
+  if(d<0)return `<span class="late">${fmtS(t.end)} (lewat ${-d} hari)</span>`;
+  if(d===0)return '<b>Hari ini</b>';if(d===1)return 'Besok';return fmtS(t.end);
+}
+
+/* ================= auth views ================= */
+const LEDGER=[['1','Migrasi server email ke cloud','IT','67%'],['1.1','Backup seluruh mailbox','IT','100%'],['1.2','Konfigurasi DNS dan MX record','IT','60%'],['2','Review kontrak vendor katering','Legal','50%'],['3','Renovasi ruang rapat lantai 3','GA','47%']];
+function authWrap(inner){
+  return `<div class="auth"><section class="hero"><div><h1>Semua task operasional di satu tempat</h1></div>
+  <p>Menggantikan spreadsheet untuk IT, Admin, Legal, dan GA. Prototipe klik ini memakai data contoh dan login simulasi, jadi semua alur bisa dicoba tanpa akun sungguhan.</p>
+  <div class="ledger" aria-hidden="true">${LEDGER.map(r=>`<div><b>${r[0]}</b><span>${r[1]}</span><span class="c" style="--dc:${dcol(r[2])}">${r[2]}</span><em>${r[3]}</em></div>`).join('')}</div></section>
+  <section class="formw"><div class="fbox">${inner}</div></section></div>${modalHtml()}`;
+}
+function loginView(){
+  const demo=[['u1','Administrator'],['u3','Pengelola (eks IT Manager)'],['u4','Member IT'],['u5','Pengelola (eks Manager Legal)'],['u6','Member Legal'],['u10','Guest (Gmail)'],['u11','Akses berakhir'],['u12','Nonaktif']];
+  return authWrap(`<h1>Masuk</h1><p class="sub">Pakai akun Google atau email dan password.</p>
+  <button class="btn gbtn" data-a="gopen"><b>.</b> Lanjut dengan Google</button>
+  <div class="or"><span>atau pakai email</span></div>
+  <label class="f">Email<input id="l-email" class="in" type="email" autocomplete="username" data-enter="login" placeholder="nama@${DOMAIN}"></label>
+  <label class="f">Password<input id="l-pass" class="in" type="password" autocomplete="current-password" data-enter="login" placeholder="Minimal 10 karakter"></label>
+  <div class="err" role="alert">${esc(S.err)}</div>
+  <button class="btn pri" style="width:100%;justify-content:center" data-a="login">Masuk</button>
+  <div class="links"><button class="lnk" data-a="forgot">Lupa password</button><button class="lnk" data-a="toRequest">Belum diundang? Ajukan akses</button></div>
+  <div class="demo"><div class="sm mut">Coba cepat sebagai (login simulasi):</div><div class="chips">${demo.map(d=>`<button class="chip" data-a="demo" data-id="${d[0]}">${d[1]}</button>`).join('')}</div>
+  <p class="sm" style="margin-top:12px"><button class="lnk" data-a="openInvite" data-id="i1">Buka contoh tautan undangan</button></p></div>`);
+}
+function twofaView(){
+  return authWrap(`<h1>Verifikasi 2 langkah</h1><p class="sub">Wajib untuk Administrator. Masukkan kode 6 digit dari aplikasi autentikator.</p>
+  <label class="f">Kode<input id="tf" class="in otp" inputmode="numeric" maxlength="6" data-enter="twofa" placeholder="000000"></label>
+  <div class="err" role="alert">${esc(S.err)}</div>
+  <div class="row"><button class="btn pri" data-a="twofa">Verifikasi</button><button class="btn" data-a="twofaFill">Isi kode contoh</button><button class="lnk" data-a="toLogin">Kembali</button></div>`);
+}
+function requestView(){
+  return authWrap(`<h1>Ajukan akses</h1><p class="sub">Tidak ada pendaftaran bebas. Permintaanmu masuk daftar "Menunggu persetujuan" sampai Administrator atau Manager menyetujui dan menentukan role dan departemenmu.</p>
+  <label class="f">Nama<input id="r-name" class="in" autocomplete="name"></label>
+  <label class="f">Email<input id="r-email" class="in" type="email" autocomplete="email" data-enter="request"></label>
+  <div class="err" role="alert">${esc(S.err)}</div>
+  <div class="row"><button class="btn pri" data-a="request">Kirim permintaan</button><button class="lnk" data-a="toLogin">Kembali ke login</button></div>`);
+}
+function waitingView(){
+  return authWrap(`<h1>Menunggu persetujuan</h1><p class="sub">Permintaan akses untuk <b>${esc(S.waitEmail||'')}</b> sudah dikirim ke Administrator dan Manager. Kamu belum punya akses ke task apa pun sampai disetujui.</p>
+  <div class="note in">Kamu akan menerima email begitu akunmu aktif.</div><button class="btn" data-a="toLogin">Kembali ke login</button>`);
+}
+function inviteView(){
+  const iv=S.invites.find(i=>i.id===S.inv.id),st=S.inv.step,by=uname(iv.by);
+  const head=`<h1>Terima undangan</h1><p class="sub"><b>${esc(by)}</b> mengundang <b>${esc(iv.email)}</b> sebagai <b>${iv.role==='Administrator'?'Administrator':iv.role+' di '+iv.dept}</b>. Tautan berlaku sampai ${fmt(iv.exp)}.</p>`;
+  let body='';
+  if(st===1)body=`<button class="btn gbtn" data-a="invGoogle"><b>.</b> Lanjut dengan Google</button><div class="or"><span>atau</span></div><button class="btn" style="width:100%;justify-content:center" data-a="invPass">Buat password</button>`;
+  if(st===2)body=`<label class="f">Password baru<input id="iv-p1" class="in" type="password" autocomplete="new-password" placeholder="Minimal 10 karakter"></label><label class="f">Ulangi password<input id="iv-p2" class="in" type="password" autocomplete="new-password" data-enter="invPass2"></label><div class="err" role="alert">${esc(S.err)}</div><button class="btn pri" data-a="invPass2">Lanjut</button>`;
+  if(st===3)body=`<p class="sub">Kami mengirim kode 6 digit ke ${esc(iv.email)} untuk memastikan alamat ini milikmu.</p><label class="f">Kode verifikasi<input id="iv-code" class="in otp" inputmode="numeric" maxlength="6" data-enter="invVerify"></label><div class="err" role="alert">${esc(S.err)}</div><div class="row"><button class="btn pri" data-a="invVerify">Verifikasi dan aktifkan</button><button class="btn" data-a="invFill">Isi kode contoh</button></div>`;
+  return authWrap(head+body+`<p style="margin-top:16px"><button class="lnk" data-a="toLogin">Batal</button></p>`);
+}
+function authScreen(){
+  switch(S.screen){case 'twofa':return twofaView();case 'invite':return inviteView();case 'request':return requestView();case 'waiting':return waitingView();default:return loginView()}
+}
+
+/* ================= shell ================= */
+const TITLES={beranda:'Beranda',papan:'Papan',jadwal:'Jadwal',template:'Template',review:'Review',import:'Import Excel',laporan:'Laporan',notif:'Notifikasi',pengguna:'Pengguna',undangan:'Undangan dan persetujuan',project:'Project',role:'Role dan departemen',log:'Log aktivitas',pengaturan:'Pengaturan',android:'Tampilan Android'};
+function shell(){
+  const u=me();
+  const nav=(id,label,icon,bd)=>`<button class="nav ${S.route===id?'on':''}" data-a="go" data-r="${id}" ${S.route===id?'aria-current="page"':''}>${ic(icon)}<span>${label}</span>${bd?`<span class="bd">${bd}</span>`:''}</button>`;
+  const pend=S.pending.filter(p=>p).length;
+  const myReviewN=tasks.filter(t=>t.status==='On Review'&&reviewersOf(t).some(r=>r.uid===S.me&&!r.decision)).length;
+  const pmoQueueN=(u.role==='Pengelola'||u.admin)?tasks.filter(t=>t.status==='Done'&&!t.closeVia).length:0;
+  const side=`<aside class="side"><div class="brand">Task Management<small>IT · Admin · Legal · GA</small></div>
+  <div class="ng">Kerja</div>${nav('beranda','Beranda','home')}${nav('papan','Papan','kanban')}${nav('jadwal','Jadwal','gantt')}${nav('template','Template','copy')}${nav('review','Review',isPMO(u)?'flag':'check',(myReviewN+pmoQueueN)||'')}${nav('notif','Notifikasi','bell',unread()||'')}
+  <div class="ng">Data</div>${anyMgr(u)?nav('import','Import Excel','upload'):''}${nav('laporan','Laporan','chart')}
+  ${u.admin?`<div class="ng">Admin</div>`:''}${u.admin?nav('pengguna','Pengguna','users'):''}${u.admin?nav('undangan','Undangan dan persetujuan','mail',pend||''):''}${u.admin?nav('project','Project','folder')+nav('role','Role dan departemen','shield')+nav('log','Log aktivitas','log')+nav('pengaturan','Pengaturan','gear'):''}
+  <div class="sp"></div><div class="ng">Pratinjau</div>${nav('android','Tampilan Android','phone')}</aside>`;
+  const showDept=['beranda','papan','jadwal','laporan'].includes(S.route);
+  const dchips=showDept?`<select class="in" data-c="deptSel" aria-label="Filter departemen" style="min-width:160px">${options([['Semua','Semua departemen'],...myDepts().map(d=>[d.id,d.id])],S.dept)}</select>
+  <select class="in" data-c="projSel" aria-label="Filter project" style="min-width:160px">${options([['Semua','Semua project'],...S.projects.map(p=>[p.id,p.code+' — '+p.name])],S.project)}</select>`:'';
+  const top=`<header class="top"><h1>${TITLES[S.route]}</h1>${dchips}<div class="who"><div class="role"><b>${esc(u.name)}</b>${esc(roleLabel(u))}</div>
+   <select class="in" data-c="switch" aria-label="Ganti pengguna (simulasi)">${options([['','Ganti pengguna…'],...users.filter(x=>x.active&&x.id!==S.me&&!(x.expires&&x.expires<TODAY)).map(x=>[x.id,x.name])],'')}</select>
+   <button class="btn" data-a="logout">Keluar</button></div></header>`;
+  let view;
+  if(!allowed(S.route))view=`<div class="note er">Role kamu tidak punya akses ke halaman ini. Di aplikasi asli, server menolak permintaannya, bukan hanya menyembunyikan menu.</div>`;
+  else view=({beranda:vHome,papan:vBoard,jadwal:vJadwal,template:vTemplates,review:vReview,import:vImport,laporan:vReport,notif:vNotif,pengguna:vUsers,undangan:vInvites,project:vProjects,role:vRoles,log:vLog,pengaturan:vSettings,android:vAndroid})[S.route]();
+  return `<div class="shell">${side}<div class="col">${top}<main class="main" id="main">${view}</main></div></div>${vDrawer()}${modalHtml()}`;
+}
+
+/* ---------- home ---------- */
+function mineGroups(uid){
+  const w1=addDays(mondayOf(TODAY),6);
+  const direct=tasks.filter(t=>t.status!=='Done'&&picIds(t).includes(uid)&&canSee(t));
+  const rootIds=[...new Set(direct.filter(t=>t.parent).map(t=>t.parent))];
+  const roots=rootIds.map(byId).filter(r=>r&&r.status!=='Done'&&!picIds(r).includes(uid));
+  const mine=[...direct,...roots];
+  const g={late:[],today:[],week:[],later:[]};
+  mine.sort((a,b)=>(a.end||'9').localeCompare(b.end||'9')).forEach(t=>{const e=t.end||'9999';if(e<TODAY)g.late.push(t);else if(e===TODAY)g.today.push(t);else if(e<=w1)g.week.push(t);else g.later.push(t)});
+  return g;
+}
+function taskRow(t){
+  const k=kids(t.id).length;
+  const sub2=t.parent?esc(byId(t.parent).title):(k?`Task gabungan · ${k} sub task`:esc(picNames(t)));
+  return `<button class="tk" data-a="open" data-id="${t.id}"><span class="no">${NUM[t.id]||''}</span><span class="tt"><div>${esc(t.title)}</div><div class="sm mut">${sub2}</div></span>${dchip(t.dept)}${pbar(t.progress)}<span class="sm tn" style="width:118px;text-align:right">${dueLabel(t)}</span></button>`;
+}
+function vHome(){
+  const u=me(),w0=mondayOf(TODAY),w1=addDays(w0,6),t=new Date(TODAY+'T00:00:00');
+  const rows=myDepts().map(d=>{const ps=vis().filter(x=>!x.parent&&x.dept===d.id);const act=ps.filter(x=>x.status!=='Done').length,late=ps.filter(lateFlag).length,dn=ps.filter(x=>x.status==='Done'&&x.doneOn>=w0&&x.doneOn<=w1).length;const avg=ps.length?ps.reduce((a,x)=>a+x.progress,0)/ps.length:0;
+    return `<tr data-a="filterDept" data-d="${d.id}" data-r="papan"><td>${dchip(d.id)} <span class="mut sm">${d.full}</span></td><td class="tn">${act}</td><td class="tn ${late?'late b':''}">${late}</td><td class="tn">${dn}</td><td>${pbar(avg)} <span class="sm tn">${fp(avg)}</span></td></tr>`}).join('');
+  const g=mineGroups(S.me),gl=(k,l)=>g[k].length?`<div class="grp">${l} <span class="mut">(${g[k].length})</span></div>${g[k].map(taskRow).join('')}`:'';
+  const nMine=g.late.length+g.today.length+g.week.length+g.later.length;
+  const pend=anyMgr(u)&&S.pending.length?`<div class="note in row"><span>${S.pending.length} permintaan akses menunggu persetujuan.</span><button class="btn s" data-a="go" data-r="undangan">Tinjau</button></div>`:'';
+  return `<h2>Selamat pagi, ${esc(firstName(u.name))}</h2><p class="sub">${DAYF[t.getDay()]}, ${t.getDate()} ${MONF[t.getMonth()]} ${t.getFullYear()}</p>${pend}
+  <div class="grid2"><div class="panel"><table class="dt"><thead><tr><th>Departemen</th><th>Task aktif</th><th>Lewat tenggat</th><th>Selesai minggu ini</th><th>Progress rata-rata</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Kamu belum punya akses ke departemen mana pun.</td></tr>'}</tbody></table></div>
+  <div><h3 style="margin-bottom:8px">Task saya</h3><div class="panel">${nMine?gl('late','Lewat tenggat')+gl('today','Hari ini')+gl('week','Minggu ini')+gl('later','Nanti'):'<div class="empty">Tidak ada task aktif yang ditugaskan ke kamu.</div>'}</div></div></div>`;
+}
+
+/* ---------- filters ---------- */
+function filtersBar(){
+  const pics=users.filter(x=>x.active&&(x.admin===false));
+  const dateLbl=S.f.from?(S.f.to?`${fmtS(S.f.from)} – ${fmtS(S.f.to)}`:`Dari ${fmtS(S.f.from)}…`):'Filter tanggal';
+  return `<div class="bar-actions"><div class="row" style="position:relative"><input id="q" class="in" style="width:190px" placeholder="Cari task" data-c="q" value="${esc(S.f.q)}" aria-label="Cari task"></div>
+  <select class="in" data-c="fpic" aria-label="Filter PIC">${options([['','Semua PIC'],...pics.map(x=>[x.id,x.name])],S.f.pic)}</select>
+  <select class="in" data-c="fprio" aria-label="Filter prioritas">${options([['','Semua prioritas'],...PRIO],S.f.prio)}</select>
+  <select class="in" data-c="fdue" aria-label="Filter tenggat">${options([['','Semua tenggat'],['late','Lewat tenggat'],['week','Minggu ini']],S.f.due)}</select>
+  <button class="btn" data-a="dateFilterOpen">${ic('gantt')} ${dateLbl}</button>${S.f.from||S.f.to?`<button class="btn s" data-a="fclear" aria-label="Hapus filter tanggal">${ic('x')}</button>`:''}
+  <span class="sp" style="flex:1"></span>${newBtn()}</div>`;
+}
+const newBtn=()=>canCreateSelfTask()?`<button class="btn pri" data-a="newTask">${ic('plus')}Task baru</button>`:'';
+function passF(t){
+  const f=S.f,ks=kids(t.id),all=[t,...ks];
+  if(S.project!=='Semua'&&projectOf(t)!==S.project)return false;
+  if(f.pic&&!all.some(x=>picIds(x).includes(f.pic)))return false;
+  if(f.prio&&t.prio!==f.prio)return false;
+  if(f.due==='late'&&!lateFlag(t))return false;
+  if(f.due==='week'&&!all.some(x=>x.end&&x.end>=TODAY&&x.end<=addDays(mondayOf(TODAY),6)&&x.status!=='Done'))return false;
+  if((f.from||f.to)&&!all.some(x=>{
+    if(!x.start&&!x.end)return false;
+    const s=x.start||x.end,e=x.end||x.start;
+    if(f.from&&e<f.from)return false;
+    if(f.to&&s>f.to)return false;
+    return true;
+  }))return false;
+  if(f.q&&!all.some(x=>x.title.toLowerCase().includes(f.q.toLowerCase())))return false;
+  return true;
+}
+
+/* ---------- kanban ---------- */
+function card(t){
+  const ch=kids(t.id),ed=(canEdit(t)||canEditProg(t))&&!ch.length&&t.status!=='On Review',dn=ch.filter(c=>c.status==='Done').length;
+  const revBadge=t.status==='On Review'?`<div class="mut sm" style="margin-top:2px">${reviewersOf(t).length?'Review: '+reviewProgress(t)+(t.reviewApproved?' · semua setuju, menunggu closing':''):'Tanpa reviewer · menunggu closing PMO'}</div>`:t.status==='Revisi'?`<div class="mut sm" style="margin-top:2px">${ic('x')} Perlu direvisi</div>`:t.status==='Done'?`<div class="mut sm" style="margin-top:2px">${ic('check')} Menunggu closing PMO</div>`:'';
+  const closeBtns=t.status==='Done'&&isPMO()?`<div class="row" style="margin-top:6px"><button class="btn s" data-a="open" data-id="${t.id}">Tinjau</button><button class="btn s pri" data-a="pmoCloseDirect" data-id="${t.id}">Closing Langsung</button></div>`:'';
+  return `<div class="card" style="--dc:${dcol(t.dept)}" ${ed?'draggable="true"':''} data-card="${t.id}" data-a="open" data-id="${t.id}">
+  <div class="cm"><span class="no">${NUM[t.id]}</span>${S.dept==='Semua'?dchip(t.dept):''}${S.project==='Semua'?`<span class="tag" style="color:var(--muted);border-color:var(--line2)">${ic('folder')} ${esc(projName(projectOf(t)))}</span>`:''}${t.restricted?`<span class="tag" title="Hanya PIC, Pengelola, dan Administrator">${ic('lock')}Terbatas</span>`:''}<span class="pr pr-${t.prio}">${t.prio}</span></div>
+  <div class="ct">${esc(t.title)}</div><div class="cp">${pbar(t.progress)}<span class="tn">${fp(t.progress)}</span></div>
+  <div class="cf"><span class="avs">${t.pic.map(avatar).join('')}</span>${ch.length?`<span class="mut">${dn}/${ch.length} sub task</span>`:''}<span class="due tn ${lateFlag(t)?'late':''}">${fmtS(t.end)}</span></div>${revBadge}${closeBtns}
+  ${ed?`<select class="cell mv" data-c="mv" data-id="${t.id}" aria-label="Pindahkan ke status">${options(STAT,t.status)}</select>`:''}</div>`;
+}
+function vBoard(){
+  const ps=scoped().filter(t=>!t.parent&&passF(t)&&!t.closeVia);
+  return filtersBar()+`<p class="sm mut" style="margin:-4px 0 12px">Tarik kartu antar kolom atau pakai pilihan di kartu. Task dengan sub task tidak bisa dipindah langsung: statusnya mengikuti sub task. Task Done tetap tampil di sini sampai benar-benar di-closing PMO — setelah itu pindah ke Laporan.</p>
+  <div class="kb">${STAT.map(s=>{const l=ps.filter(t=>t.status===s);return `<div class="kc" data-col="${s}"><h3>${s}<span>${l.length}</span></h3>${l.map(card).join('')||'<div class="empty sm">Kosong</div>'}</div>`}).join('')}</div>`;
+}
+
+/* ---------- list ---------- */
+function rowHtml(t,child){
+  const ch=kids(t.id),auto=ch.length>0,ed=canEdit(t),edp=canEditProg(t),lock=lockedBy(t),okLeaf=(ed||edp)&&!auto&&!lock&&t.status!=='On Review';
+  const open=!S.collapsed[t.id];
+  const prog=okLeaf?`<input class="cell num tn" type="number" min="0" max="100" step="1" value="${t.progress}" data-c="prog" data-id="${t.id}" aria-label="Progress ${esc(t.title)}">`:`<span class="tn" ${auto?'title="Dihitung otomatis dari sub task"':''}>${fp(t.progress)}</span>`;
+  const stat=okLeaf?`<select class="cell" data-c="status" data-id="${t.id}" aria-label="Status">${options(STAT,t.status)}</select>`:spill(t.status);
+  const prio=child?`<span class="mut" title="Diwarisi dari task induk">${t.prio}</span>`:(ed?`<select class="cell" data-c="prio" data-id="${t.id}" aria-label="Prioritas">${options(PRIO,t.prio)}</select>`:`<span class="pr pr-${t.prio}">${t.prio}</span>`);
+  const dt=f=>ed&&!auto?`<input class="cell tn" type="date" value="${t[f]||''}" data-c="${f}" data-id="${t.id}" aria-label="${f}">`:`<span class="tn">${fmtS(t[f])}</span>`;
+  const rem=ed?`<input class="cell" value="${esc(t.remarks)}" data-c="remarks" data-id="${t.id}" aria-label="Remarks" style="min-width:150px">`:esc(t.remarks);
+  return `<tr class="${child?'sub':'par'}"><td class="n"><span class="no">${NUM[t.id]}</span></td>
+  <td class="ttl">${!child&&auto?`<button class="xp ${open?'open':''}" data-a="toggle" data-id="${t.id}" aria-label="Buka atau tutup sub task">${ic('chev')}</button>`:''}${lock?`<span title="Terkunci sampai ${esc(lock)} selesai">${ic('lock')}</span> `:''}${t.restricted?`<span class="tag">${ic('lock')}Terbatas</span> `:''}<button data-a="open" data-id="${t.id}">${esc(t.title)}</button>${lateFlag(t)?' <span class="late sm">terlambat</span>':''}</td>
+  <td class="sm">${esc(picNames(t))}</td><td class="n">${prog}</td><td>${stat}</td><td>${prio}</td><td>${dt('start')}</td><td>${dt('end')}</td><td class="sm">${rem}</td><td class="n">${!child&&ed?`<button class="btn s" data-a="newSub" data-id="${t.id}" title="Tambah sub task">${ic('plus')}Sub task</button>`:''}</td></tr>`;
+}
+function listTable(depts){
+  let body='';
+  depts.forEach(d=>{
+    const ps=scoped().filter(t=>!t.parent&&t.dept===d.id&&passF(t)).sort((a,b)=>a.ord-b.ord);
+    if(S.dept==='Semua')body+=`<tr class="dept"><td colspan="10">${dchip(d.id)} <span class="mut">${d.full}</span></td></tr>`;
+    if(!ps.length)body+=`<tr><td colspan="10" class="empty sm">Tidak ada task yang cocok.</td></tr>`;
+    ps.forEach(p=>{body+=rowHtml(p,false);if(!S.collapsed[p.id])kids(p.id).forEach(c=>body+=rowHtml(c,true))});
+  });
+  return `<div class="tw"><table class="t"><thead><tr><th>No</th><th style="min-width:280px">Task</th><th>Assigned To</th><th>Progress</th><th>Status</th><th>Priority</th><th>Start</th><th>End</th><th>Remarks</th><th></th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function vList(){
+  const ds=myDepts().filter(d=>S.dept==='Semua'||S.dept===d.id);
+  return filtersBar()+`<p class="sm mut" style="margin:-4px 0 12px">Klik sel untuk mengubah langsung. Progress task induk dihitung dari jumlah sub task yang sudah Done${S.set.weighted?' (berbobot menurut durasi sub task)':''}: 1 dari 3 sub task selesai = 33,3%, semua selesai = 100%.</p>`+listTable(ds);
+}
+
+/* ---------- gantt ---------- */
+function gantt(list){
+  const W=26,N=28,s0=S.ganttStart;const rows=[];
+  list.forEach(p=>{rows.push(p);if(!S.cg[p.id])kids(p.id).forEach(c=>rows.push(c))});
+  const wk=[0,1,2,3].map(i=>`<div>${fmtS(addDays(s0,i*7))} – ${fmtS(addDays(s0,i*7+6))}</div>`).join('');
+  const days=Array.from({length:N},(_,i)=>{const d=addDays(s0,i);const n=i%7;return `<div class="${n>=5?'we '+(S.wkColor?'on':''):''} ${d===TODAY?'td':''}" title="${fmt(d)}">${'SSRKJSM'[n]}</div>`}).join('');
+  const tl=diff(s0,TODAY)>=0&&diff(s0,TODAY)<N?`<u class="tl" style="left:${(diff(s0,TODAY)+.5)*W}px"></u>`:'';
+  let body='';
+  rows.forEach(t=>{
+    const sub=!!t.parent,a=Math.max(0,diff(s0,t.start||TODAY)),b=Math.min(N-1,diff(s0,t.end||TODAY)),out=diff(s0,t.end||TODAY)<0||diff(s0,t.start||TODAY)>N-1;
+    const bar=out?'':`<div class="gbar ${sub?'gs':''} ${isLate(t)?'late':''}" style="left:${a*W+2}px;width:${(b-a+1)*W-4}px;--dc:${dcol(t.dept)}" data-a="open" data-id="${t.id}" title="${esc(t.title)}: ${fp(t.progress)}, ${fmtS(t.start)} – ${fmtS(t.end)}"><i style="width:${t.progress}%"></i><span>${fp(t.progress)}</span></div>`;
+    body+=`<div class="gr"><div class="gl ${sub?'gs':''}"><span class="no">${NUM[t.id]}</span>${!sub&&kids(t.id).length?`<button class="xp ${S.cg[t.id]?'':'open'}" data-a="toggleG" data-id="${t.id}">${ic('chev')}</button>`:''}<button data-a="open" data-id="${t.id}" ${sub?'':'class="b"'}>${esc(t.title)}</button></div><div class="gt ${S.wkColor?'wk':''}">${bar}${tl}</div></div>`;
+  });
+  return `<div class="gw"><div class="gr h"><div class="gl">Task</div><div class="gh w">${wk}</div></div><div class="gr h"><div class="gl">Display week: ${fmtS(s0)} – ${fmtS(addDays(s0,N-1))}</div><div class="gh">${days}</div></div>${body||'<div class="empty">Tidak ada task.</div>'}</div>`;
+}
+function ganttCtl(){
+  return `<div class="bar-actions"><button class="btn" data-a="gPrev" aria-label="Minggu sebelumnya">‹ Minggu lalu</button><button class="btn" data-a="gToday">Minggu ini</button><button class="btn" data-a="gNext" aria-label="Minggu berikutnya">Minggu depan ›</button>
+  <label class="sw" style="gap:6px"><span class="sm mut">Lompat ke</span><input type="date" class="in" value="${S.ganttStart}" data-c="gjump" aria-label="Lompat timeline ke tanggal atau bulan tertentu"></label>
+  <label class="sw"><input type="checkbox" data-c="wkc" ${S.wkColor?'checked':''}> Warna akhir pekan</label><span class="mut sm">Garis merah = hari ini (${fmtS(TODAY)}). Bar terisi = progress.</span></div>`;
+}
+function vTimeline(){
+  const list=scoped().filter(t=>!t.parent&&passF(t)).sort((a,b)=>DEPTS.findIndex(d=>d.id===a.dept)-DEPTS.findIndex(d=>d.id===b.dept)||a.ord-b.ord);
+  return ganttCtl()+gantt(list);
+}
+
+/* ---------- jadwal (daftar + timeline digabung) ---------- */
+const JCOLDEFS={pic:{label:'Assigned To',w:105},progress:{label:'Progress',w:64},priority:{label:'Priority',w:80},start:{label:'Start',w:116},end:{label:'End',w:116},remarks:{label:'Remarks',w:150}};
+function jwColList(){
+  const codeLen=Math.max(3,...(S.projects||[]).map(p=>(p.code||'').length));
+  const noW=Math.max(64,codeLen*8+46);
+  const c=[{id:'no',label:'No',w:noW},{id:'task',label:'Task',w:210}];
+  ['pic','progress'].forEach(k=>{if(S.jwCols[k])c.push({id:k,...JCOLDEFS[k]})});
+  c.push({id:'status',label:'Status',w:100});
+  ['priority','start','end','remarks'].forEach(k=>{if(S.jwCols[k])c.push({id:k,...JCOLDEFS[k]})});
+  return c;
+}
+function jadwalCell(id,t,child){
+  const ch=kids(t.id),auto=ch.length>0,ed=canEdit(t),edp=canEditProg(t),lock=lockedBy(t),okLeaf=(ed||edp)&&!auto&&!lock&&t.status!=='On Review',open=!S.collapsed[t.id];
+  const full=canSeeFull(t);
+  switch(id){
+    case 'no': return `<div class="n"><span class="no">${NUM[t.id]}</span></div>`;
+    case 'task': return `<div class="ttl">${!child&&auto?`<button class="xp ${open?'open':''}" data-a="toggle" data-id="${t.id}" aria-label="Buka atau tutup sub task">${ic('chev')}</button>`:''}${lock?`<span title="Terkunci sampai ${esc(lock)} selesai">${ic('lock')}</span> `:''}${t.restricted?`<span class="tag">${ic('lock')}Terbatas</span> `:''}${full?`<button data-a="open" data-id="${t.id}">${esc(t.title)}</button>`:`<span title="Sub task milik orang lain, hanya tampil ringkas">${ic('lock')} ${esc(t.title)}</span>`}${lateFlag(t)?' <span class="late sm">terlambat</span>':''}</div>`;
+    case 'pic': return `<div class="sm">${esc(picNames(t))}</div>`;
+    case 'progress': return `<div>${!full?'<span class="mut">–</span>':okLeaf?`<input class="cell num tn" type="number" min="0" max="100" step="1" value="${t.progress}" data-c="prog" data-id="${t.id}" aria-label="Progress ${esc(t.title)}">`:`<span class="tn" ${auto?'title="Dihitung otomatis dari sub task"':''}>${fp(t.progress)}</span>`}</div>`;
+    case 'status': return `<div>${okLeaf?`<select class="cell" data-c="status" data-id="${t.id}" aria-label="Status">${options(STAT,t.status)}</select>`:spill(t.status)}</div>`;
+    case 'priority': return `<div>${!full?'<span class="mut">–</span>':child?`<span class="mut sm" title="Diwarisi dari task induk">${t.prio}</span>`:(ed?`<select class="cell" data-c="prio" data-id="${t.id}" aria-label="Prioritas">${options(PRIO,t.prio)}</select>`:`<span class="pr pr-${t.prio}">${t.prio}</span>`)}</div>`;
+    case 'start': case 'end': return `<div>${!full?'<span class="mut">–</span>':ed&&!auto?`<input class="cell tn" type="date" value="${t[id]||''}" data-c="${id}" data-id="${t.id}" aria-label="${id}">`:`<span class="tn">${fmtS(t[id])}</span>`}</div>`;
+    case 'remarks': return `<div class="sm">${!full?'':ed?`<input class="cell" value="${esc(t.remarks)}" data-c="remarks" data-id="${t.id}" aria-label="Remarks">`:esc(t.remarks)}</div>`;
+    case 'act': return `<div style="display:flex;justify-content:flex-end">${!child&&ed?`<button class="btn s" data-a="newSub" data-id="${t.id}" title="Tambah sub task">${ic('plus')}</button>`:''}</div>`;
+  }
+}
+function jadwalRow(t,child,cols,grid){
+  return `<div class="jl ${child?'sub':'par'}" style="grid-template-columns:${grid}">${cols.map(c=>jadwalCell(c.id,t,child)).join('')}</div>`;
+}
+function jwColsBar(){
+  const chk=(k,l)=>`<label class="sw"><input type="checkbox" data-c="jwcol" data-k="${k}" ${S.jwCols[k]?'checked':''}> ${l}</label>`;
+  return `<div class="row" style="gap:14px;margin:6px 0 4px;flex-wrap:wrap"><span class="sm mut">Kolom:</span>${chk('pic','PIC')}${chk('progress','Progress')}${chk('priority','Priority')}${chk('start','Start')}${chk('end','End')}${chk('remarks','Remarks')}</div>`;
+}
+function vJadwal(){
+  const W=26,N=28,s0=S.ganttStart;
+  const cols=jwColList(),grid=cols.map(c=>c.w+'px').join(' '),wrapW=cols.reduce((a,c)=>a+c.w,0);
+  const headL=`<div class="jl h" style="grid-template-columns:${grid}">${cols.map(c=>`<div>${c.label}</div>`).join('')}</div>`;
+  const wk=[0,1,2,3].map(i=>`<div>${fmtS(addDays(s0,i*7))} – ${fmtS(addDays(s0,i*7+6))}</div>`).join('');
+  const days=Array.from({length:N},(_,i)=>{const d=addDays(s0,i);const n=i%7;return `<div class="${n>=5?'we '+(S.wkColor?'on':''):''} ${d===TODAY?'td':''}" title="${fmt(d)}">${'SSRKJSM'[n]}</div>`}).join('');
+  const tl=diff(s0,TODAY)>=0&&diff(s0,TODAY)<N?`<u class="tl" style="left:${(diff(s0,TODAY)+.5)*W}px"></u>`:'';
+  const ps=scoped().filter(t=>!t.parent&&passF(t)).sort((a,b)=>a.ord-b.ord);
+  let body='',shownN=0;
+  const rows=[];ps.forEach(p=>{rows.push(p);if(!S.collapsed[p.id])kids(p.id).forEach(c=>rows.push(c))});
+  rows.forEach(t=>{
+    shownN++;
+    const child=!!t.parent,left=jadwalRow(t,child,cols,grid);
+    const a=Math.max(0,diff(s0,t.start||TODAY)),b=Math.min(N-1,diff(s0,t.end||TODAY)),out=!t.start||!t.end||diff(s0,t.end)<0||diff(s0,t.start)>N-1;
+    const bar=out?'':`<div class="gbar ${child?'gs':''} ${isLate(t)?'late':''}" style="left:${a*W+2}px;width:${(b-a+1)*W-4}px;--dc:${dcol(t.dept)}" data-a="open" data-id="${t.id}" title="${esc(t.title)}: ${fp(t.progress)}, ${fmtS(t.start)} – ${fmtS(t.end)}"><i style="width:${t.progress}%"></i><span>${fp(t.progress)}</span></div>`;
+    body+=`<div class="jr"><div class="jl-wrap" style="width:${wrapW}px">${left}</div><div class="gt ${S.wkColor?'wk':''}">${bar}${tl}</div></div>`;
+  });
+  return filtersBar()+ganttCtl()+jwColsBar()+`<p class="sm mut" style="margin:4px 0 12px">Gabungan Daftar dan Timeline, terhubung langsung dengan Papan: mengubah status atau progress di sini otomatis memindahkan kartunya di Papan, dan sebaliknya. Klik sel untuk mengubah langsung. Progress task induk dihitung dari jumlah sub task yang sudah Done${S.set.weighted?' (berbobot menurut durasi sub task)':''}: 1 dari 3 sub task selesai = 33,3%. Sembunyikan kolom yang tidak perlu di atas supaya timeline di kanan lebih cepat terlihat saat digeser; kolom kiri tetap terlihat saat digeser ke kanan; lipat task induk dengan panah di sebelah nomor.</p>
+  <div class="jw"><div class="jr h"><div class="jl-wrap" style="width:${wrapW}px">${headL}</div><div class="gh w">${wk}</div></div><div class="jr h"><div class="jl-wrap" style="width:${wrapW}px"><div class="jl sub2">Display week: ${fmtS(s0)} – ${fmtS(addDays(s0,N-1))}</div></div><div class="gh">${days}</div></div>${shownN?body:'<div class="empty">Tidak ada task untuk ditampilkan.</div>'}</div>`;
+}
+
+/* ---------- templates ---------- */
+function vTemplates(){
+  return `<p class="sub">Kumpulan task berulang. Pilih template, tentukan PIC dan tanggal mulai, sub task dan jadwalnya terbentuk otomatis.</p><div class="tpg">${TEMPLATES.map(t=>`<div class="panel tp"><div class="row">${dchip(t.dept)}${t.seq?'<span class="tag">Urutan wajib</span>':''}</div><h3>${esc(t.name)}</h3><ol>${t.subs.map(s=>`<li>${esc(s[0])} <span class="sm">(${s[1]} hari)</span></li>`).join('')}</ol><div style="margin-top:auto">${canCreateTask()?`<button class="btn pri" data-a="useTpl" data-id="${t.id}">Buat task dari template</button>`:`<span class="sm mut">Hanya PMO, Direktur, atau IT Manager yang bisa membuat task.</span>`}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- review workflow ---------- */
+function vReview(){
+  const u=me();
+  const myList=tasks.filter(t=>t.status==='On Review'&&reviewersOf(t).some(r=>r.uid===u.id&&!r.decision));
+  const pmoList=isPMO(u)?tasks.filter(t=>t.status==='Done'&&!t.closeVia):[];
+  if(!myList.length&&!pmoList.length)return '<div class="empty">Tidak ada task yang perlu kamu tangani saat ini.</div>';
+  let h='';
+  if(myList.length)h+=`<h3 style="margin-bottom:8px">Perlu keputusanmu sebagai reviewer</h3><div class="tw" style="margin-bottom:20px"><table class="t"><thead><tr><th>No</th><th style="min-width:220px">Task</th><th>Departemen</th><th>PIC</th><th>Progress review</th><th></th></tr></thead><tbody>${myList.map(t=>`<tr><td class="n"><span class="no">${NUM[t.id]}</span></td><td><button class="lnk" data-a="open" data-id="${t.id}">${esc(t.title)}</button></td><td>${dchip(t.dept)}</td><td class="sm">${esc(picNames(t))}</td><td class="n">${reviewProgress(t)} sudah menilai</td><td><div class="row"><button class="btn s pri" data-a="reviewDecideOpen" data-id="${t.id}" data-dec="accept">Accept</button><button class="btn s dng" data-a="reviewDecideOpen" data-id="${t.id}" data-dec="reject">Reject</button></div></td></tr>`).join('')}</tbody></table></div>`;
+  if(isPMO(u)){
+    h+=`<h3 style="margin-bottom:8px">Menunggu closing (sudah disetujui semua reviewer)</h3>`;
+    h+=pmoList.length?`<div class="tw"><table class="t"><thead><tr><th>No</th><th style="min-width:200px">Task</th><th>Departemen</th><th>Project</th><th>Reviewer</th><th>PIC</th><th></th></tr></thead><tbody>${pmoList.map(t=>`<tr><td class="n"><span class="no">${NUM[t.id]}</span></td><td><button class="lnk" data-a="open" data-id="${t.id}">${esc(t.title)}</button></td><td>${dchip(t.dept)}</td><td class="sm">${esc(projName(projectOf(t)))}</td><td class="sm">${reviewersOf(t).length?reviewersOf(t).map(r=>esc(uname(r.uid))).join(', '):'—'}</td><td class="sm">${esc(picNames(t))}</td><td><div class="row"><button class="btn s" data-a="open" data-id="${t.id}">Tinjau & Closing</button><button class="btn s pri" data-a="pmoCloseDirect" data-id="${t.id}">Closing Langsung</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Tidak ada task yang menunggu closing.</div>';
+  }
+  return h;
+}
+function vProjects(){
+  return `<p class="sub">Project memisahkan alur/board task, terpisah dari Departemen (siapa mengerjakan). Bisa ditambah kapan saja, tidak dibatasi jumlahnya. Kode dipakai sebagai awalan nomor task (mis. OPS-1, CM-2) supaya nomor tetap sama untuk semua orang, apa pun tampilan atau filter yang sedang dipakai.</p>
+  <div class="tw"><table class="t"><thead><tr><th>Kode</th><th>Project</th><th class="n">Jumlah task induk</th><th></th></tr></thead><tbody>${S.projects.map(p=>{const n=tasks.filter(t=>!t.parent&&t.project===p.id).length;return `<tr><td><b>${esc(p.code)}</b></td><td>${esc(p.name)}</td><td class="n">${n}</td><td><div class="row"><button class="btn s" data-a="projEditOpen" data-id="${p.id}">Edit</button><button class="btn s dng" data-a="projDelete" data-id="${p.id}" ${n?'disabled title="Masih ada task, tidak bisa dihapus"':''}>Hapus</button></div></td></tr>`}).join('')}</tbody></table></div>
+  <div class="row" style="margin-top:12px"><input id="proj-new" class="in grow" placeholder="Nama project baru, mis. IT Audit" data-enter="projectAdd"><input id="proj-code" class="in" style="width:110px" placeholder="Kode (opsional)" maxlength="6"><button class="btn pri" data-a="projectAdd">Tambah Project</button></div>`;
+}
+
+/* ---------- import ---------- */
+function matchPic(name){
+  const n=name.trim().toLowerCase();
+  const ex=users.find(u=>u.name.toLowerCase()===n);if(ex)return{uid:ex.id};
+  if(/(\bteam|^tim\b)/i.test(name))return{team:name.trim()};
+  const tok=n.replace(/\./g,'').split(/\s+/);
+  const cand=users.filter(u=>u.active&&tok.some(x=>x.length>1&&u.name.toLowerCase().split(/\s+/).includes(x))).map(u=>u.id);
+  return{cand:cand.length?cand:users.filter(u=>u.active).map(u=>u.id)};
+}
+const isAmb=s=>/^\d{2}\/\d{2}\/\d{4}$/.test(s||'')&&+s.slice(0,2)<=12&&+s.slice(3,5)<=12;
+function parseD(s,f){
+  if(!s)return null;if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return null;
+  return f==='mdy'?`${m[3]}-${m[1]}-${m[2]}`:`${m[3]}-${m[2]}-${m[1]}`;
+}
+function impAnalyze(){
+  const u=me(),I=S.imp;
+  return IMPORT_ROWS.map((r,i)=>{
+    const res=I.res[i]||{};let state='ok',fatal=null,probs=[];
+    const par=r.no?r.no.split('.')[0]:'';
+    if(!(u.admin||u.role==='Pengelola'))fatal={label:'Ditolak',msg:`Departemen ${r.dept} di luar hak import kamu`};
+    else if(r.no&&r.no.includes('.')&&!IMPORT_ROWS.some(x=>x.dept===r.dept&&x.no===par))fatal={label:'Error',msg:`Sub task ${r.no} tidak punya induk ${par}`};
+    const upd=r.id?byId(r.id):null;
+    if(!fatal&&r.id&&(!upd||!canEdit(upd)))fatal={label:'Ditolak',msg:'Task dengan ID ini tidak bisa kamu ubah'};
+    const pm=matchPic(r.pic);let pic=null;
+    if(pm.uid)pic={uid:pm.uid};else if(pm.team)pic={team:pm.team};
+    else{probs.push('pic');if(res.pic)pic={uid:res.pic}}
+    const amb=isAmb(r.start)||isAmb(r.end);if(amb&&!I.dateFmt)probs.push('date');
+    const conflict=r.status&&statusOf(r.progress)!==r.status;if(conflict){probs.push('conflict')}
+    const open=probs.filter(k=>(k==='pic'&&!res.pic)||(k==='date'&&!I.dateFmt)||(k==='conflict'&&!res.conf));
+    if(fatal)state='fatal';else if(res.skip)state='skip';else if(open.length)state='todo';
+    let prog=r.progress,stat=r.status;
+    if(conflict&&res.conf==='status'){prog=stat==='Done'?100:stat==='To do'?0:50}
+    if(conflict&&res.conf==='progress')stat=statusOf(prog);
+    return{...r,i,state,fatal,probs,open,pm,pic,res,amb,upd,prog,stat,s:parseD(r.start,I.dateFmt),e:parseD(r.end,I.dateFmt),conflict};
+  });
+}
+function vImport(){
+  const I=S.imp;let main='';
+  if(I.stage==='upload'){
+    main=`<div class="panel pad"><h3>1. Unggah file</h3><p class="sub">.xlsx atau .csv, maksimal 1.000 baris. Kolom: No, Task, Assigned To, Progress, Status, Priority, Start, End, Remarks, Departemen (dan ID untuk memperbarui task yang sudah ada).</p>
+    <div class="row"><button class="btn pri" data-a="impPick">${ic('upload')}Pilih file (pakai file contoh)</button><button class="btn" data-a="impTpl">Unduh template</button></div>
+    <p class="sm mut" style="margin-top:10px">File contoh: <b>task_september.xlsx</b>, ${IMPORT_ROWS.length} baris berisi berbagai masalah supaya kamu bisa mencoba alur perbaikannya. Import ditujukan untuk migrasi awal dan tambahan massal, bukan sinkronisasi dua arah.</p></div>`;
+  }else if(I.stage==='preview'){
+    const rows=impAnalyze(),ok=rows.filter(r=>r.state==='ok'&&!r.upd),upd=rows.filter(r=>r.state==='ok'&&r.upd);
+    const np=ok.filter(r=>!r.no.includes('.')).length,ns=ok.filter(r=>r.no.includes('.')).length,prob=rows.filter(r=>r.probs.length||r.fatal||r.state==='skip').length,todo=rows.filter(r=>r.state==='todo').length;
+    const dateQ=rows.some(r=>r.amb&&!r.fatal)?`<div class="note">${I.dateFmt?'':'<b>Ada tanggal yang ambigu</b> (mis. 05/10/2026). '}Format mana yang dipakai untuk semua tanggal seperti ini? <span class="row" style="margin-top:6px"><label class="sw"><input type="radio" name="df" data-c="dfmt" value="dmy" ${I.dateFmt==='dmy'?'checked':''}> DD/MM/YYYY (5 Okt 2026)</label><label class="sw"><input type="radio" name="df" data-c="dfmt" value="mdy" ${I.dateFmt==='mdy'?'checked':''}> MM/DD/YYYY (10 Mei 2026)</label></span></div>`:'';
+    const tr=rows.map(r=>{
+      let info='';
+      if(r.fatal)info=`<span class="late">${r.fatal.label}: ${esc(r.fatal.msg)}</span>`;
+      else if(r.state==='skip')info='<span class="mut">Dilewati</span> <button class="lnk sm" data-a="impUnskip" data-i="'+r.i+'">Batalkan lewati</button>';
+      else{
+        const parts=[];
+        if(r.probs.includes('pic')&&!r.pm.uid)parts.push(`Nama PIC "${esc(r.pic_raw||IMPORT_ROWS[r.i].pic)}" tidak cocok dengan user. <select class="in" data-c="impPic" data-i="${r.i}"><option value="">Pilih user…</option>${options(r.pm.cand.map(id=>[id,uname(id)]),r.res.pic||'')}</select>`);
+        if(r.probs.includes('conflict'))parts.push(`Status "${IMPORT_ROWS[r.i].status}" tapi progress ${IMPORT_ROWS[r.i].progress}%. Pakai: <select class="in" data-c="impConf" data-i="${r.i}"><option value="">Pilih…</option>${options([['status','Status (progress jadi '+(IMPORT_ROWS[r.i].status==='Done'?100:0)+'%)'],['progress','Progress (status jadi '+statusOf(IMPORT_ROWS[r.i].progress)+')']],r.res.conf||'')}</select>`);
+        if(r.probs.includes('date')&&!I.dateFmt)parts.push('Tanggal ambigu, pilih format di atas.');
+        if(!parts.length)info=r.upd?`<span class="done-t" style="color:var(--prog)">Memperbarui ${r.id}</span>`:(r.pm.team?'<span class="mut">OK, disimpan sebagai PIC tim</span>':'<span style="color:var(--done)">OK</span>');
+        else info=parts.join('<br>');
+        if(r.state==='todo'||parts.length)info+=` <button class="lnk sm" data-a="impSkip" data-i="${r.i}">Lewati baris</button>`;
+      }
+      return `<tr><td class="tn mut">${r.r}</td><td>${dchip(r.dept)}</td><td class="tn">${esc(r.no||'—')}</td><td>${esc(r.task)}</td><td class="sm">${esc(IMPORT_ROWS[r.i].pic)}</td><td class="sm">${IMPORT_ROWS[r.i].status} ${IMPORT_ROWS[r.i].progress}%</td><td class="sm">${esc(r.start)}<br>${esc(r.end)}</td><td class="sm">${info}</td></tr>`;
+    }).join('');
+    main=`<div class="note in"><b>Akan dibuat ${np} task dan ${ns} sub task${upd.length?', memperbarui '+upd.length+' task':''}, ${prob} baris bermasalah.</b> ${todo?`${todo} baris masih perlu keputusan.`:'Semua masalah sudah ditangani.'}</div>${dateQ}
+    <div class="tw"><table class="t" style="min-width:980px"><thead><tr><th>Baris</th><th>Dept</th><th>No</th><th>Task</th><th>Assigned To</th><th>Status</th><th>Start / End</th><th style="min-width:300px">Hasil pengecekan</th></tr></thead><tbody>${tr}</tbody></table></div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-a="impGo" ${todo?'disabled':''}>Konfirmasi import</button><button class="btn" data-a="impCancel">Batal</button><button class="btn" data-a="impErr">Unduh laporan error</button></div>`;
+  }else{
+    const b=S.batches[0];
+    main=`<div class="note ok"><b>Import selesai.</b> ${b.tasks} task dan ${b.subs} sub task dibuat${b.updated?', '+b.updated+' task diperbarui':''} dengan ID batch <b>${b.id}</b>. PIC menerima satu notifikasi ringkasan.</div><div class="row"><button class="btn pri" data-a="go" data-r="jadwal">Lihat di Jadwal</button><button class="btn" data-a="impAgain">Import lagi</button></div>`;
+  }
+  const bt=S.batches.length?`<h3 style="margin:26px 0 8px">Riwayat import</h3><div class="tw"><table class="t" style="min-width:640px"><thead><tr><th>Batch</th><th>File</th><th>Oleh</th><th>Waktu</th><th>Hasil</th><th>Status</th><th></th></tr></thead><tbody>${S.batches.map(b=>`<tr><td class="b">${b.id}</td><td>${esc(b.file)}</td><td>${esc(b.by)}</td><td class="sm">${b.at}</td><td class="sm">${b.tasks} task, ${b.subs} sub task</td><td>${b.status}</td><td>${b.status==='Aktif'&&!b.locked?`<button class="btn s dng" data-a="batchCancel" data-id="${b.id}">Batalkan batch</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'';
+  return `<p class="sub">Alur: unggah, preview, konfirmasi, task dibuat. Hak import: Administrator (semua departemen) dan Manager (departemennya).</p>${main}${bt}`;
+}
+function impDo(){
+  const rows=impAnalyze().filter(r=>r.state==='ok'),map={};let np=0,ns=0,nu=0;
+  const bid='B-'+pad(++bseq+1);const pics=new Set();
+  const mkT=(r,parent)=>{
+    const p=parent?byId(parent):null;
+    const id=mk(r.dept,r.task,{parent,p:r.prog,pic:r.pic?[r.pic.uid||r.pic.team]:[],s:r.s,e:r.e,prio:r.prio||'Medium',r:r.remarks,by:S.me,batch:bid,upd:TODAY+' '+hhmm()});
+    const t=byId(id);t.history.push({at:nowStr(),who:me().name,text:'Dibuat lewat import '+bid});
+    if(r.pic&&r.pic.uid)pics.add(r.pic.uid);return id;
+  };
+  rows.filter(r=>!r.upd&&!r.no.includes('.')).forEach(r=>{map[r.dept+'|'+r.no]=mkT(r,null);np++});
+  rows.filter(r=>!r.upd&&r.no.includes('.')).forEach(r=>{mkT(r,map[r.dept+'|'+r.no.split('.')[0]]);ns++});
+  rows.filter(r=>r.upd).forEach(r=>{const t=r.upd;t.progress=r.prog;t.status=statusOf(r.prog);t.remarks=r.remarks||t.remarks;t.history.unshift({at:nowStr(),who:me().name,text:'Diperbarui lewat import '+bid});touch(t);nu++});
+  tasks.filter(t=>!t.parent).forEach(t=>recalc(t.id));
+  S.batches.unshift({id:bid,file:'task_september.xlsx',by:me().name,at:nowStr(),tasks:np,subs:ns,updated:nu,status:'Aktif'});
+  logEv('import','Import selesai',`${np} task, ${ns} sub task, ${nu} diperbarui (${bid})`);
+  notify('imp',null,`Import ${bid} selesai: ${np} task dan ${ns} sub task baru untukmu dan timmu`,[...pics]);
+  S.notifs.unshift({id:'n'+(++nseq),uid:S.me,type:'imp',tid:null,text:`Import ${bid} selesai: ${np} task, ${ns} sub task`,at:'21 Sep, '+hhmm(),read:false});
+  S.imp={stage:'done',res:{},dateFmt:null};
+}
+
+/* ---------- report ---------- */
+function repRows(){
+  const ps=scoped().sort((a,b)=>DEPTS.findIndex(d=>d.id===a.dept)-DEPTS.findIndex(d=>d.id===b.dept)||a.ord-b.ord);
+  const w0=mondayOf(TODAY),m0=TODAY.slice(0,8)+'01',m1=addDays(TODAY.slice(0,8)+'01',30);
+  const rng={all:null,week:[w0,addDays(w0,6)],month:[m0,m1.slice(0,7)===TODAY.slice(0,7)?m1:TODAY.slice(0,8)+'30'],next30:[TODAY,addDays(TODAY,30)]}[S.rep.period];
+  const flat=[];
+  S.projects.forEach(pr=>ps.filter(t=>!t.parent&&t.project===pr.id).forEach(p=>{flat.push(p);kids(p.id).forEach(c=>flat.push(c))}));
+  return flat.filter(t=>!rng||(t.start<=rng[1]&&t.end>=rng[0]));
+}
+function vReport(){
+  const rows=repRows(),tab=S.rep.tab;
+  const ctl=`<div class="bar-actions"><select class="in" data-c="period" aria-label="Periode">${options([['all','Semua periode'],['week','Minggu ini'],['month','Bulan ini'],['next30','30 hari ke depan']],S.rep.period)}</select><span class="flex" style="flex:1"></span>
+  <button class="btn" data-a="repXlsx">Ekspor .xlsx</button><button class="btn" data-a="repCsv">Salin alamat data (CSV)</button><button class="btn pri" data-a="repSheets">Buka di Google Sheets</button></div>
+  <div class="note ok row"><span style="color:var(--done)">●</span> Tersinkron ke Google Sheets pukul ${S.synced}. Diperbarui otomatis setiap ada perubahan di aplikasi.<button class="btn s" data-a="repSync" style="margin-left:auto">Sinkronkan sekarang</button></div>`;
+  const tabs=`<div class="tabs" role="tablist">${['Data','Laporan','Gantt'].map(x=>`<button role="tab" class="${tab===x?'on':''}" data-a="repTab" data-t="${x}">${x}</button>`).join('')}</div>`;
+  let body='';
+  const cols='ABCDEFGHIJKLM'.split('');
+  if(tab==='Data'){
+    const H=['ID','No','Task','Assigned To','Progress','Status','Priority','Start','End','Remarks','Departemen','Project','Induk','Diubah pada'];
+    body=`<p class="sm mut" style="margin-bottom:8px">Tab ini diisi oleh aplikasi, satu baris per task atau sub task. Perubahan langsung di sini akan tertimpa; edit lewat aplikasi.</p><div class="sheet"><table><tr class="col-l"><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr><tr class="hd"><th>1</th>${H.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map((t,i)=>`<tr><td>${i+2}</td><td>${t.id}</td><td>${NUM[t.id]}</td><td>${esc(t.title)}</td><td>${esc(picNames(t))}</td><td>${fp(t.progress)}</td><td>${t.status}</td><td>${t.prio}</td><td>${t.start||''}</td><td>${t.end||''}</td><td>${esc(t.remarks)}</td><td>${t.dept}</td><td>${esc(projName(projectOf(t)))}</td><td>${t.parent?byId(t.parent).id:''}</td><td>${t.upd}</td></tr>`).join('')}</table></div>`;
+  }else if(tab==='Laporan'){
+    let b='';
+    S.projects.forEach(pr=>{const l=rows.filter(t=>projectOf(t)===pr.id);if(!l.length)return;b+=`<tr><td colspan="11" style="background:var(--tint);font-weight:600">${esc(pr.name)}</td></tr>`+l.map(t=>`<tr style="${t.parent?'':'font-weight:600'}"><td></td><td>${NUM[t.id]}</td><td style="${t.parent?'padding-left:20px':''}">${esc(t.title)}</td><td>${dchip(t.dept)}</td><td>${esc(picNames(t))}</td><td>${fp(t.progress)}</td><td>${t.status}</td><td>${t.prio}</td><td>${fmtS(t.start)}</td><td>${fmtS(t.end)}</td><td>${esc(t.remarks)}</td></tr>`).join('')});
+    body=`<p class="sm mut" style="margin-bottom:8px">Dibagi per Project. Membaca dari tab Data lewat rumus, jadi tampilannya tidak rusak kalau ada yang salah edit.</p><div class="sheet"><table><tr class="hd"><th></th><th>No</th><th>Task</th><th>Dept</th><th>Assigned To</th><th>Progress</th><th>Status</th><th>Priority</th><th>Start</th><th>End</th><th>Remarks</th></tr>${b||'<tr><td colspan="11" class="empty">Tidak ada data pada periode ini.</td></tr>'}</table></div>`;
+  }else{
+    body=ganttCtl()+gantt(rows.filter(t=>!t.parent));
+  }
+  return `<p class="sub">Aplikasi adalah sumber data utama; Google Sheets adalah laporan. File Excel tidak berubah sendiri saat tertutup: isinya diperbarui saat dibuka atau di-refresh.</p>${ctl}${tabs}${body}`;
+}
+
+/* ---------- notifications ---------- */
+const NTYPES=[['assign','Task baru ditugaskan ke saya'],['status','Status atau progress task saya diubah orang lain'],['due','Tenggat hari ini atau besok'],['late','Lewat tenggat'],['imp','Ringkasan import']];
+function vNotif(){
+  const u=me(),list=S.notifs.filter(n=>n.uid===S.me&&(!S.notifOnlyUnread||!n.read));
+  return `<div class="grid2"><div><div class="bar-actions"><label class="sw"><input type="checkbox" data-c="unread" ${S.notifOnlyUnread?'checked':''}> Hanya yang belum dibaca</label><button class="btn" data-a="readAll">Tandai semua dibaca</button></div>
+  <div class="panel">${list.length?list.map(n=>`<button class="tk" data-a="openNotif" data-id="${n.id}"><span style="width:8px;height:8px;border-radius:50%;background:${n.read?'transparent':'var(--prog)'};flex:none"></span><span class="tt"><div style="white-space:normal">${esc(n.text)}</div><div class="sm mut">${n.at}</div></span></button>`).join(''):'<div class="empty">Belum ada notifikasi.</div>'}</div></div>
+  <div class="panel pad"><h3>Pengaturan notifikasi pribadi</h3><p class="sub">Notifikasi hanya dikirim ke orang yang relevan. Matikan jenis yang tidak kamu perlukan.</p>${NTYPES.map(([k,l])=>`<label class="sw" style="display:flex;margin-bottom:8px"><input type="checkbox" data-c="pref" data-k="${k}" ${u.prefs[k]!==false?'checked':''}> ${l}</label>`).join('')}
+  <div class="note in" style="margin-top:6px"><label class="sw" style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-c="desktopToggle" id="desktop-notif-cb" ${S.set.desktopNotif?'checked':''}><span><b>Notifikasi pop-up di laptop + suara</b><br><span class="sm mut">Butuh izin browser. Bunyi pendek akan diputar tiap ada notifikasi baru selagi tab ini terbuka.</span></span></label>${S.set.desktopNotif?'<button class="btn s" data-a="desktopTest" style="margin-top:8px">Uji coba sekarang</button>':''}</div>
+  <div class="note" style="margin-top:14px;margin-bottom:0"><b>Catatan Android.</b> Mulai Android 13, izin notifikasi harus diberikan manual. Di Xiaomi, Oppo, dan Vivo, kecualikan aplikasi dari penghemat baterai supaya push tetap masuk.</div></div></div>`;
+}
+
+/* ---------- admin ---------- */
+function vUsers(){
+  const rows=users.map(u=>{
+    const exp=u.expires?(u.expires<TODAY?`<span class="badge off">Berakhir ${fmt(u.expires)}</span>`:`<span class="badge ex">Sampai ${fmt(u.expires)}</span>`):'<span class="mut">–</span>';
+    return `<tr><td class="b">${esc(u.name)}${u.extra.length?`<div class="sm mut b" style="font-weight:400">+ ${u.extra.map(esc).join(', ')}</div>`:''}</td><td class="sm">${esc(u.email)}${isExt(u)?' <span class="badge">eksternal</span>':''}</td><td class="sm">${u.via}</td><td class="sm">${esc(roleLabel(u))}</td><td>${u.active?'<span style="color:var(--done)">Aktif</span>':'<span class="mut">Nonaktif</span>'}</td><td>${exp}</td><td class="sm">${u.last}</td>
+    <td class="n"><button class="btn s" data-a="uToggle" data-id="${u.id}">${u.active?'Nonaktifkan':'Aktifkan'}</button> <button class="btn s" data-a="uLink" data-id="${u.id}">Tautkan email</button>${u.expires?` <button class="btn s" data-a="uExtend" data-id="${u.id}">Perpanjang</button>`:''}</td></tr>`}).join('');
+  return `<div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:12px"><p class="sub" style="margin:0">Akun dinonaktifkan, tidak dihapus, supaya riwayat task tetap utuh. Satu profil bisa punya beberapa email.</p><button class="btn pri" data-a="addUserOpen">${ic('plus')}Tambah Pengguna</button></div><div class="tw"><table class="t" style="min-width:1000px"><thead><tr><th>Nama</th><th>Email</th><th>Login</th><th>Role</th><th>Status</th><th>Kedaluwarsa akses</th><th>Terakhir login</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function vInvites(){
+  const u=me();
+  const inv=S.invites.filter(i=>i.status==='Menunggu');
+  const pend=S.pending.filter(p=>true);
+  return `<div class="grid2"><div class="panel pad"><h3>Undang lewat email</h3><p class="sub">Tautan sekali pakai, berlaku 7 hari. Tidak ada pendaftaran bebas.</p>
+  <div class="row"><input id="iv-email" class="in grow" type="email" placeholder="email@contoh.com" aria-label="Email yang diundang" data-enter="invSend"><select id="iv-role" class="in" aria-label="Role">${options(ROLES,'Member')}</select><button class="btn pri" data-a="invSend">Kirim undangan</button></div>
+  <p class="sm mut" style="margin-top:6px">Departemen (label jabatan) diatur belakangan lewat halaman Role dan departemen setelah orangnya bergabung.</p></div>
+  <div><h3 style="margin-bottom:8px">Undangan menunggu (${inv.length})</h3><div class="tw"><table class="t" style="min-width:640px"><thead><tr><th>Email</th><th>Role</th><th>Diundang oleh</th><th>Berlaku sampai</th><th></th></tr></thead><tbody>${inv.map(i=>`<tr><td>${esc(i.email)}</td><td>${i.role}</td><td class="sm">${esc(uname(i.by))}</td><td class="sm">${fmt(i.exp)}</td><td class="n"><button class="btn s" data-a="openInvite" data-id="${i.id}">Buka tautan (simulasi)</button> <button class="btn s" data-a="invResend" data-id="${i.id}">Kirim ulang</button> <button class="btn s dng" data-a="invRevoke" data-id="${i.id}">Batalkan</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty sm">Tidak ada undangan yang menunggu.</td></tr>'}</tbody></table></div></div>
+  <div><h3 style="margin-bottom:8px">Menunggu persetujuan (${pend.length})</h3><div class="tw"><table class="t" style="min-width:640px"><thead><tr><th>Nama</th><th>Email</th><th>Diajukan</th><th></th></tr></thead><tbody>${pend.map(p=>`<tr><td class="b">${esc(p.name)}</td><td>${esc(p.email)}</td><td class="sm">${p.at}</td><td class="n"><button class="btn s pri" data-a="apprOpen" data-id="${p.id}">Setujui…</button> <button class="btn s dng" data-a="apprReject" data-id="${p.id}">Tolak</button></td></tr>`).join('')||'<tr><td colspan="4" class="empty sm">Tidak ada permintaan.</td></tr>'}</tbody></table></div></div></div>`;
+}
+function vRoles(){
+  const rows=users.filter(u=>u.active).map(u=>{
+    const roleBadge=`<span class="tag">${u.role}</span>`;
+    const deptSummary=u.depts&&u.depts.length?u.depts.join(' · '):'<span class="mut sm">Tanpa departemen</span>';
+    return `<tr><td class="b">${esc(u.name)}</td><td>${roleBadge}</td><td class="sm">${deptSummary}</td><td class="n"><button class="btn s" data-a="rolesEditOpen" data-id="${u.id}">Edit</button></td></tr>`;
+  }).join('');
+  return `<p class="sub">Administrator dan Pengelola punya akses penuh ke semua task di semua departemen — bedanya, hanya Administrator yang bisa mengundang/menambah pengguna dan mengubah role orang lain. Member hanya memegang task miliknya sendiri. Guest hanya bisa melihat. Departemen di sini murni label jabatan, tidak membatasi akses. Sistem menolak menurunkan Administrator terakhir.</p><div class="tw"><table class="t" style="min-width:600px"><thead><tr><th>Pengguna</th><th>Role</th><th>Departemen (label)</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function vLog(){
+  const list=S.log.filter(l=>!S.logF||l.k===S.logF);
+  return `<div class="bar-actions"><select class="in" data-c="logf" aria-label="Filter jenis">${options([['','Semua jenis'],['login','Login'],['role','Perubahan role'],['undangan','Undangan'],['import','Import'],['task','Task terbatas'],['review','Review & closing PMO'],['project','Project'],['hapus','Penghapusan'],['akses','Akses'],['pengaturan','Pengaturan']],S.logF)}</select><span class="mut sm">Log tidak bisa diubah atau dihapus.</span></div><div class="tw"><table class="t" style="min-width:760px"><thead><tr><th>Waktu</th><th>Siapa</th><th>Tindakan</th><th>Pada</th></tr></thead><tbody>${list.map(l=>`<tr><td class="sm n">${l.at}</td><td>${esc(l.who)}</td><td>${esc(l.action)}</td><td class="sm">${esc(l.target)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function vSettings(){
+  const s=S.set;
+  const sw=(k,l,d)=>`<label class="sw" style="display:flex;align-items:flex-start;margin-bottom:12px"><input type="checkbox" data-c="set" data-k="${k}" ${s[k]?'checked':''}><span><b>${l}</b><br><span class="sm mut">${d}</span></span></label>`;
+  return `<div class="grid2"><div class="panel pad"><h3 style="margin-bottom:10px">Keamanan akses</h3>
+  <label class="sw" style="display:flex;margin-bottom:12px"><input type="checkbox" checked disabled><span><b>Verifikasi 2 langkah wajib untuk Administrator</b><br><span class="sm mut">Opsional untuk yang lain. Tidak bisa dimatikan.</span></span></label>
+  <label class="f" style="max-width:320px">Masa berlaku akses akun eksternal (Gmail)<select class="in" data-c="expiry">${options([[3,'3 bulan'],[6,'6 bulan (default)'],[12,'12 bulan']],s.expiry)}</select></label>
+  <p class="sm mut">Password minimal 10 karakter, disimpan sebagai hash. Undangan berlaku 7 hari. Percobaan login dibatasi.</p></div>
+  <div class="panel pad"><h3 style="margin-bottom:4px">Keputusan yang masih terbuka</h3><p class="sub">Ini sebagian pertanyaan di bagian 14 rancangan. Coba dua-duanya, lihat efeknya, lalu putuskan.</p>
+  ${sw('weighted','Progress induk berbobot menurut durasi sub task','Mati: setiap sub task dihitung sama rata (selesai/total). Nyala: sub task yang lebih lama pengaruhnya lebih besar saat dihitung selesai atau belum.')}
+  ${sw('seqOn','Urutan wajib antar sub task','Sub task bisa dikunci sampai sub task sebelumnya selesai. Contoh: Penggantian smart lock ruang server.')}
+  ${sw('legalRestricted','Task baru di Legal otomatis berstatus Terbatas','Tanda Terbatas bisa dicabut per task oleh Manager atau Administrator.')}</div></div>`;
+}
+
+/* ---------- android ---------- */
+function vAndroid(){
+  const A0=S.and,u=me(),g=mineGroups(S.me);
+  const cards=(k,l)=>g[k].length?`<div class="pgh">${l}</div>${g[k].map(t=>`<div class="pt" style="--dc:${dcol(t.dept)}" data-a="andOpen" data-id="${t.id}"><div class="row sm"><span class="no">${NUM[t.id]}</span>${dchip(t.dept)}<span class="mut" style="margin-left:auto">${dueLabel(t)}</span></div><div class="ct">${esc(t.title)}</div><div class="row">${pbar(t.progress)}<span class="sm tn">${fp(t.progress)}</span>${spill(t.status)}</div></div>`).join('')}`:'';
+  let bodyH='';
+  if(A0.tab==='task')bodyH=(cards('late','Lewat tenggat')+cards('today','Hari ini')+cards('week','Minggu ini')+cards('later','Nanti'))||'<div class="empty">Tidak ada task aktif untukmu.<br><span class="sm">Ganti pengguna di kanan atas (mis. Dimas Pratama atau Lestari Dewi) untuk melihat isinya.</span></div>';
+  if(A0.tab==='notif'){const l=S.notifs.filter(n=>n.uid===S.me);bodyH=l.map(n=>`<div class="pt" style="--dc:${n.read?'var(--line)':'var(--prog)'}" data-a="openNotifA" data-id="${n.id}"><div class="sm">${esc(n.text)}</div><div class="sm mut">${n.at}</div></div>`).join('')||'<div class="empty">Belum ada notifikasi.</div>'}
+  if(A0.tab==='set')bodyH=`<div class="pt" style="--dc:var(--line)"><b>Notifikasi</b>${NTYPES.map(([k,l])=>`<label class="sw" style="display:flex;margin-top:8px"><input type="checkbox" data-c="pref" data-k="${k}" ${u.prefs[k]!==false?'checked':''}> <span class="sm">${l}</span></label>`).join('')}</div><div class="pt" style="--dc:var(--line)"><b>Akun</b><div class="sm mut">${esc(u.name)} · ${esc(roleLabel(u))}</div></div>`;
+  const t=A0.sheet?byId(A0.sheet):null;
+  const sheet=t?androidSheet(t):'';
+  const banner=A0.banner?`<div class="banner" data-a="andOpen" data-id="${A0.banner.tid}"><b>Task Management</b><div>${esc(A0.banner.text)}</div><small>sekarang</small></div>`:'';
+  const nav=(id,l,i)=>`<button class="${A0.tab===id?'on':''}" data-a="andTab" data-t="${id}">${ic(i)}${l}${id==='notif'&&unread()?` (${unread()})`:''}</button>`;
+  return `<div class="andw"><div class="phone" role="group" aria-label="Simulasi aplikasi Android">${banner}<div class="ph-top"><h2>${A0.tab==='task'?'Task saya':A0.tab==='notif'?'Kotak notifikasi':'Pengaturan'}</h2></div><div class="ph-b">${bodyH}</div>${sheet}<div class="ph-nav">${nav('task','Task saya','check')}${nav('notif','Notifikasi','bell')}${nav('set','Pengaturan','gear')}</div></div>
+  <div style="flex:1;min-width:260px;max-width:460px"><h3>Fokus pada kerja harian</h3><p class="sub">Di HP: lihat task saya, ubah status dan progress, komentar, buka sub task, terima notifikasi. Import, kelola user, dan laporan tetap di dashboard.</p>
+  <div class="row" style="margin-bottom:14px"><button class="btn pri" data-a="andPush">Simulasikan push: task baru</button></div>
+  <div class="note in">Jalur teknis yang disarankan: PWA, satu kode dengan dashboard dan cukup untuk notifikasi. Bisa naik ke Flutter jika kebutuhan berkembang.</div><div class="note">Catatan Android 13+: pengguna perlu mengizinkan notifikasi manual. Xiaomi, Oppo, dan Vivo membatasi proses latar belakang, jadi perlu panduan pengecualian penghemat baterai.</div></div></div>`;
+}
+function androidSheet(t){
+  const ch=kids(t.id),ed=canEdit(t),lock=lockedBy(t),auto=ch.length>0;
+  return `<div class="sheetb"><div class="sheetp"><div class="row"><b class="grow">${NUM[t.id]} ${esc(t.title)}</b><button class="btn s" data-a="andClose">${ic('x')}</button></div><div class="sm mut">${dchip(t.dept)} ${esc(picNames(t))} · ${dueLabel(t)}</div>
+  ${lock?`<div class="note" style="margin-top:8px">Terkunci sampai ${esc(lock)} selesai.</div>`:''}
+  ${ed&&!auto&&!lock&&t.status!=='On Review'&&t.status!=='Revisi'?`<div class="seg">${STAT.map(s=>`<button class="${t.status===s?'on':''}" data-a="andStatus" data-id="${t.id}" data-s="${s}">${s}</button>`).join('')}</div><input type="range" min="0" max="100" step="5" value="${t.progress}" data-c="andProg" data-id="${t.id}" aria-label="Progress"><div class="sm tn r">${fp(t.progress)}</div>`:`<div class="row" style="margin:8px 0">${spill(t.status)}${pbar(t.progress)}<span class="sm">${fp(t.progress)}</span></div>${auto?'<div class="sm mut">Dihitung dari sub task.</div>':''}${t.status==='On Review'||t.status==='Revisi'?'<div class="sm mut">Sedang direview — lihat detail lengkap di dashboard.</div>':''}`}
+  ${ch.length?`<h4 style="margin-top:10px">Sub task</h4>${ch.map(c=>{
+    const cEd=canEdit(c)&&!lockedBy(c);
+    const act=c.status==='To do'&&cEd?`<button class="btn s b-todo" data-a="startWork" data-id="${c.id}" aria-label="Kerjakan: ${esc(c.title)}">▶</button>`:c.status==='On Progress'&&cEd?`<button class="btn s b-wip" data-a="finishSub" data-id="${c.id}" aria-label="Selesai: ${esc(c.title)}">✓</button>`:c.status==='Done'?`<span class="b-done" title="Selesai">✓</span>`:`<span class="sm mut">${fp(c.progress)}</span>`;
+    return `<div class="stl" style="grid-template-columns:28px 1fr 40px"><span class="no">${NUM[c.id]}</span><span class="ttl sm">${esc(c.title)}</span>${act}</div>`;
+  }).join('')}`:''}
+  ${t.remarks?`<h4 style="margin-top:10px">Remarks</h4><div class="sm">${esc(t.remarks)}</div>`:''}
+  <h4 style="margin-top:10px">Komentar</h4>${t.comments.map(c=>`<div class="cmt sm"><b>${esc(uname(c.uid))}</b> <small>${c.at}</small><div>${esc(c.text)}</div></div>`).join('')||'<div class="sm mut">Belum ada komentar.</div>'}
+  ${canComment(t)?`<div class="row" style="margin-top:8px"><input id="cm-in" class="in grow" placeholder="Tulis komentar" data-enter="comment" data-id="${t.id}"><button class="btn pri" data-a="comment" data-id="${t.id}">Kirim</button></div>`:''}</div></div>`;
+}
+
+/* ---------- drawer ---------- */
+function vDrawer(){
+  const t=S.openId?byId(S.openId):null;if(!t||!canSee(t))return '';
+  const ed=canEdit(t),edp=canEditProg(t),ch=kids(t.id),sub=!!t.parent,par=sub?byId(t.parent):null,auto=ch.length>0,lock=lockedBy(t),u=me();
+  const leafEd=(ed||edp)&&!auto&&!lock&&t.status!=='On Review'&&t.status!=='Revisi';
+  const edLock=sub?ed:canEditLocked(t);
+  const picEd=sub?ed:isPMO(u);
+  const picOpts=users.filter(x=>x.active&&!picIds(t).includes(x.id));
+  const dis=ed?'':'disabled';
+  const myPending=reviewersOf(t).find(r=>r.uid===S.me&&!r.decision);
+  return `<div class="ov" data-a="close"></div><aside class="drawer" role="dialog" aria-label="Detail task"><div class="dh"><div class="grow"><div class="row sm"><span class="no">${NUM[t.id]}</span>${dchip(t.dept)}${!sub&&isPMO(u)?`<select class="in sm" data-c="projChange" data-id="${t.id}" style="width:auto;padding:2px 6px" aria-label="Pindahkan ke Project lain">${options(S.projects.map(pr=>[pr.id,pr.code+' — '+pr.name]),projectOf(t))}</select>`:`<span class="tag" style="color:var(--muted);border-color:var(--line2)">${ic('folder')} ${esc(projName(projectOf(t)))}</span>`}${t.restricted?`<span class="tag">${ic('lock')}Terbatas</span>`:''}${lateFlag(t)?'<span class="late">Terlambat</span>':''}<span class="mut">${t.id}</span></div>
+  <input class="ti" value="${esc(t.title)}" data-c="title" data-id="${t.id}" ${edLock?'':'disabled'} aria-label="Judul task">${sub?`<div class="sm mut">Sub task dari <button class="lnk" data-a="open" data-id="${par.id}">${NUM[par.id]} ${esc(par.title)}</button></div>`:''}</div><button class="btn" data-a="close" aria-label="Tutup">${ic('x')}</button></div>
+  <div class="db">${!ed&&!edp?`<div class="note in">Kamu hanya bisa melihat task ini (${u.role==='Guest'?'role Guest':'bukan PIC atau pembuatnya'}).</div>`:''}${edp?'<div class="note in">Kamu diberi akses khusus untuk mengubah progress dan status task ini saja.</div>':''}${lock?`<div class="note">${ic('lock')} Terkunci: selesaikan <b>${esc(lock)}</b> lebih dulu (urutan wajib).</div>`:''}${auto?'<div class="note in">Progress, status, dan tanggal dihitung otomatis dari sub task.</div>':''}
+  ${!sub&&!edLock?`<div class="note in">Judul, deadline, prioritas, dan departemen terkunci untuk PIC — hanya PMO yang bisa mengubahnya.</div>`:''}
+  ${t.status==='Revisi'?`<div class="note er"><b>${ic('x')} Perlu direvisi.</b> Ada reviewer yang menolak — lihat catatan di bawah, lalu ajukan ulang setelah diperbaiki.
+  ${canSubmitReview(t)?`<div class="row" style="margin-top:8px"><button class="btn s pri" data-a="submitReview" data-id="${t.id}">Ajukan ulang untuk Review</button></div>`:''}</div>`:''}
+  ${(t.status==='On Review'||t.status==='Revisi'||(t.status==='Done'&&!t.closeVia))&&reviewersOf(t).length?`<div class="note"><b>Reviewer (${reviewProgress(t)} sudah menilai)</b>
+  <div style="margin-top:6px;display:grid;gap:4px">${reviewersOf(t).map(r=>`<div class="sm">${esc(uname(r.uid))} — ${r.decision==='accept'?'<span style="color:var(--done)">Accept</span>':r.decision==='reject'?'<span style="color:var(--late)">Reject</span>'+(r.note?': '+esc(r.note):''):'<span class="mut">belum menilai</span>'}</div>`).join('')}</div>
+  ${myPending&&t.status==='On Review'?`<div class="row" style="margin-top:8px"><button class="btn s pri" data-a="reviewDecideOpen" data-id="${t.id}" data-dec="accept">Accept</button><button class="btn s dng" data-a="reviewDecideOpen" data-id="${t.id}" data-dec="reject">Reject</button></div>`:''}
+  ${t.status==='Done'&&!t.closeVia?(isPMO(u)?`<div class="row" style="margin-top:8px"><button class="btn s pri" data-a="pmoCloseReview" data-id="${t.id}">Closing task ini</button></div>`:`<p class="sm mut" style="margin-top:8px">Semua reviewer sudah menyetujui. Menunggu closing PMO.</p>`):''}</div>`:''}
+  ${t.status==='Done'&&!t.closeVia&&!reviewersOf(t).length?`<div class="note in"><b>Tidak ada reviewer untuk task ini.</b> Task sudah Done, menunggu closing PMO.
+  ${isPMO(u)?`<div class="row" style="margin-top:8px"><button class="btn s pri" data-a="pmoCloseReview" data-id="${t.id}">Closing task ini</button></div>`:''}</div>`:''}
+  ${ed&&!auto&&t.status==='To do'?`<div class="row" style="margin-bottom:14px"><button class="btn pri" data-a="startWork" data-id="${t.id}">Kerjakan task ini</button></div>`:''}
+  ${!sub&&canSubmitReview(t)&&(t.status==='On Progress')?`<div class="row" style="margin-bottom:14px"><button class="btn pri" data-a="submitReview" data-id="${t.id}">Ajukan untuk Review</button></div>`:''}
+  <div class="kv"><label>Status<select class="in" data-c="status" data-id="${t.id}" ${leafEd?'':'disabled'}>${options(STAT,t.status)}</select></label>
+  <label>Progress (%)<input class="in tn" type="number" min="0" max="100" value="${t.progress}" data-c="prog" data-id="${t.id}" ${leafEd?'':'disabled'}></label>
+  <label>Prioritas${sub?' (diwarisi)':''}<select class="in" data-c="prio" data-id="${t.id}" ${!sub&&edLock?'':'disabled'}>${options(PRIO,t.prio)}</select></label>
+  <label>${!sub&&isMgr(u,t.dept)?`Akses<span class="sw" style="display:flex;margin-top:9px;color:var(--ink)"><input type="checkbox" data-c="restr" data-id="${t.id}" ${t.restricted?'checked':''}> Terbatas (PIC, Pengelola, Administrator)</span>`:'&nbsp;'}</label>
+  <label>Start<input class="in tn" type="date" value="${t.start||''}" data-c="start" data-id="${t.id}" ${edLock&&!auto?'':'disabled'}></label><label>End<input class="in tn" type="date" value="${t.end||''}" data-c="end" data-id="${t.id}" ${edLock&&!auto?'':'disabled'}></label></div>
+  <h4>PIC</h4><div class="pics">${t.pic.map((p,i)=>`<span class="pc">${avatar(p)}<span style="margin-left:4px">${esc(p.team||uname(p.uid))}</span>${picEd?`<button data-a="picDel" data-id="${t.id}" data-i="${i}" aria-label="Hapus PIC">${ic('x')}</button>`:''}</span>`).join('')||'<span class="mut sm">Belum ada PIC</span>'}${!sub&&isPMO(u)?`<button class="btn s" data-a="reassignPicOpen" data-id="${t.id}">Alihkan PIC</button>`:''}</div>
+  <p class="sm mut">Dibuat oleh ${esc(uname(t.by))}</p>
+  ${picEd?`<div class="row">${picField('pic-add-'+t.id,picOpts,'Ketik nama, atau nama tim bebas','picAdd',t.id)}<button class="btn" data-a="picAdd" data-id="${t.id}">Tambah</button></div>`:''}
+  ${!sub&&(t.picHistory||[]).length>1?`<p class="sm mut">Riwayat PIC: ${t.picHistory.map(h=>`${h.from?esc(uname(h.from)):'(belum ada)'} → ${esc(uname(h.to))} (${h.at}, oleh ${esc(h.by)})`).join('; ')}</p>`:''}
+  ${!sub?`<h4>Reviewer</h4><div class="pics">${reviewersOf(t).length?reviewersOf(t).map(r=>`<span class="pc">${avatar({uid:r.uid})}<span style="margin-left:4px">${esc(uname(r.uid))}${r.decision?' · '+(r.decision==='accept'?'Accept':'Reject'):''}</span></span>`).join(''):'<span class="mut sm">Tidak ada reviewer — langsung ke antrian PMO setelah diajukan.</span>'}</div>`:''}
+  <h4>Remarks</h4><textarea class="in" data-c="remarks" data-id="${t.id}" ${dis} placeholder="Catatan, alasan tertahan, atau menunggu pihak lain">${esc(t.remarks)}</textarea>
+  <h4>Lampiran</h4>
+  <div class="atts">${(t.attachments||[]).map((a,i)=>`<div class="att-row"><a href="${a.data}" download="${esc(a.name)}" class="lnk">📎 ${esc(a.name)}</a><span class="sm mut">${fmtSize(a.size)} · oleh ${esc(a.by)}</span>${ed?`<button data-a="fileDel" data-id="${t.id}" data-i="${i}" aria-label="Hapus lampiran ${esc(a.name)}">${ic('x')}</button>`:''}</div>`).join('')||'<p class="sm mut">Belum ada lampiran.</p>'}</div>
+  ${ed?`<label class="btn s" style="display:inline-block;cursor:pointer;margin-top:6px">Unggah file<input type="file" style="display:none" multiple data-c="fileUp" data-id="${t.id}"></label><p class="sm mut" style="margin-top:4px">Maks 3 MB per file. Tersimpan untuk sesi ini saja (simulasi).</p>`:''}
+  ${!sub?`<h4>Sub task</h4>${ch.map(c=>{
+    const full=canSeeFull(c);
+    if(!full){
+      return `<div class="stl"><span class="no">${NUM[c.id]}</span><span class="ttl"><span title="Sub task milik orang lain, hanya tampil ringkas">${ic('lock')} ${esc(c.title)}</span></span><span class="sm">${esc(picNames(c))}</span><span>${spill(c.status)}</span><span></span><span></span></div>`;
+    }
+    const l=lockedBy(c),cEd=canEdit(c),cEdp=canEditProg(c),okLeaf=(cEd||cEdp)&&!l&&c.status!=='On Review',canDel=cEd;
+    const statH=okLeaf?`<select class="cell sm" data-c="status" data-id="${c.id}" aria-label="Status ${esc(c.title)}">${options(STAT,c.status)}</select>`:spill(c.status);
+    const progH=okLeaf?`<input class="cell num tn" type="number" min="0" max="100" step="1" value="${c.progress}" data-c="prog" data-id="${c.id}" aria-label="Progress ${esc(c.title)}">`:`<span class="sm tn">${fp(c.progress)}</span>`;
+    const picChips=c.pic.length?c.pic.map((p,i)=>`<span class="pcs">${esc(p.team||uname(p.uid))}${cEd?`<button data-a="picDel" data-id="${c.id}" data-i="${i}" aria-label="Hapus PIC ${esc(p.team||uname(p.uid))}">${ic('x')}</button>`:''}</span>`).join(''):'<span class="mut">—</span>';
+    const cand=users.filter(x=>x.active&&!picIds(c).includes(x.id));
+    const quickAdd=S.picEditId===c.id?`<div style="grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 6px 36px">${picField('pq-'+c.id,cand,'Ketik nama, atau nama tim','picQuickAdd',c.id)}<button class="btn s pri" data-a="picQuickAdd" data-id="${c.id}">Tambah</button><button class="btn s" data-a="picQuickToggle" data-id="${c.id}">Tutup</button></div>`:'';
+    return `<div class="stl"><span class="no">${NUM[c.id]}</span>
+    <span class="ttl"><button class="lnk" style="text-decoration:none;color:var(--ink)" data-a="open" data-id="${c.id}">${l?ic('lock')+' ':''}${esc(c.title)}</button><div class="sm mut">${fmtS(c.start)} – ${fmtS(c.end)}</div></span>
+    <span class="sm" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center">${picChips}${cEd?`<button class="lnk sm" data-a="picQuickToggle" data-id="${c.id}">+ PIC</button>`:''}</span>
+    <span>${statH}</span><span>${progH}</span>
+    <span class="stl-act">${okLeaf&&c.status==='To do'?`<button class="btn s b-todo" data-a="startWork" data-id="${c.id}" title="Kerjakan sub task ini" aria-label="Kerjakan sub task ${esc(c.title)}">▶</button>`:''}${okLeaf&&c.status==='On Progress'?`<button class="btn s b-wip" data-a="finishSub" data-id="${c.id}" title="Tandai selesai" aria-label="Tandai selesai: ${esc(c.title)}">✓</button>`:''}${c.status==='Done'?`<span class="b-done" title="Selesai">✓</span>`:''}<button class="btn s" data-a="open" data-id="${c.id}" title="Edit sub task" aria-label="Edit sub task ${esc(c.title)}">✎</button>${canDel?`<button class="btn s dng" data-a="delTask" data-id="${c.id}" title="Hapus sub task" aria-label="Hapus sub task ${esc(c.title)}">${ic('x')}</button>`:''}</span>
+    ${quickAdd}</div>`;
+  }).join('')||'<div class="sm mut">Belum ada sub task.</div>'}
+  ${ed?`<div class="row" style="margin-top:8px"><input id="sub-in" class="in grow" placeholder="Judul sub task, atau tempel beberapa baris sekaligus" data-enter="subAdd" data-id="${t.id}"><button class="btn" data-a="subAdd" data-id="${t.id}">Tambah sub task</button></div>`:''}
+  ${ed&&S.set.seqOn&&ch.length?`<label class="sw" style="margin-top:10px"><input type="checkbox" data-c="seq" data-id="${t.id}" ${t.sequential?'checked':''}> Urutan wajib: sub task terkunci sampai sebelumnya selesai</label>`:''}`:''}
+  <h4>Komentar</h4>${t.comments.map(c=>`<div class="cmt"><b>${esc(uname(c.uid))}</b> <small>${c.at}</small><div>${esc(c.text)}</div></div>`).join('')||'<div class="sm mut">Belum ada komentar.</div>'}
+  ${canComment(t)?`<div class="row" style="margin-top:8px"><input id="cm-in" class="in grow" placeholder="Tulis komentar" data-enter="comment" data-id="${t.id}"><button class="btn pri" data-a="comment" data-id="${t.id}">Kirim</button></div>`:''}
+  <h4>Riwayat perubahan</h4>${t.history.slice(0,12).map(h=>`<div class="hist"><span class="tn">${h.at}</span> · ${esc(h.who)}: ${esc(h.text)}</div>`).join('')||'<div class="sm mut">Belum ada perubahan.</div>'}
+  ${ed&&isMgr(u,t.dept)?`<div style="margin-top:22px"><button class="btn dng" data-a="delTask" data-id="${t.id}">${S.delArm===t.id?'Klik lagi untuk menghapus'+(sub?'':(ch.length?' (beserta sub task)':'')):'Hapus '+(sub?'sub task':'task')}</button></div>`:''}</div></aside>`;
+}
+
+/* ---------- modals ---------- */
+function modalHtml(){
+  const m=S.modal;if(!m)return '';
+  let inner='';
+  if(m.type==='gchoose'){
+    inner=`<h2>Pilih akun Google</h2>${users.map(u=>`<button class="acc" data-a="gpick" data-id="${u.id}"><span class="av" style="background:hsl(${hue(u.id)} 32% 38%);margin:0">${initials(u.name)}</span><span><b>${esc(u.name)}</b><div class="sm mut">${esc(u.email)}</div></span></button>`).join('')}<div class="acts"><button class="btn" data-a="mclose">Batal</button></div>`;
+  }else if(m.type==='newTask'){
+    const u0=me(),par=m.parent?byId(m.parent):null,selfOnly=par?u0.role==='Member':selfOnlyCreate(u0);
+    const ds=par?[par.dept]:(selfOnly?myDepts().map(d=>d.id):DEPTS.map(d=>d.id)),d0=m.dept||ds[0];
+    const cand=users.filter(x=>x.active);
+    const revCand=users.filter(x=>x.active&&!(m.reviewers||[]).includes(x.id));
+    inner=`<h2>${par?'Sub task baru untuk '+esc(par.title):'Task baru'}</h2>${selfOnly?`<p class="sm mut">Kamu membuat ${par?'sub task':'task'} untuk dirimu sendiri sebagai Member. PIC otomatis kamu, tidak bisa ditugaskan ke orang lain.</p>`:''}<label class="f">Judul<input id="nt-title" class="in" value="${esc(m.title||'')}" data-enter="ntSave" autofocus></label>
+    <div class="kv" style="margin-bottom:12px"><label>Departemen<select id="nt-dept" class="in" data-c="ntDept" ${par?'disabled':''}>${options(ds,d0)}</select></label><label>Prioritas${par?' (diwarisi)':''}<select id="nt-prio" class="in" ${par?'disabled':''}>${options(PRIO,m.prio||(par?par.prio:'Medium'))}</select></label>
+    ${!par?`<label>Project<select id="nt-proj" class="in">${options(S.projects.map(pr=>[pr.id,pr.code+' — '+pr.name]),m.project||(S.project!=='Semua'?S.project:S.projects[0].id))}</select></label><label>&nbsp;</label>`:''}
+    <label>Start<input id="nt-s" class="in" type="date" value="${m.s||TODAY}"></label><label>End<input id="nt-e" class="in" type="date" value="${m.e||addDays(TODAY,7)}"></label>
+    <label>PIC (wajib)${selfOnly?`<input class="in" value="${esc(u0.name)} (kamu)" disabled>`:picField('nt-pic-f',cand,'Ketik nama, atau nama tim',null,null,m.picText)}</label></div>
+    ${!par?`<label class="f">Reviewer (opsional)</label><div class="pics">${(m.reviewers||[]).map((uid,i)=>`<span class="pc">${avatar({uid})}<span style="margin-left:4px">${esc(uname(uid))}</span><button data-a="ntRevDel" data-i="${i}" aria-label="Hapus reviewer">${ic('x')}</button></span>`).join('')||'<span class="mut sm">Belum ada reviewer.</span>'}</div>
+    <div class="row" style="margin-bottom:10px">${picField('nt-rev-f',revCand,'Ketik nama reviewer…')}<button class="btn" data-a="ntRevAdd">Tambah reviewer</button></div>
+    <p class="sm mut">Reviewer menilai hasil kerja PIC (Accept/Reject) sebelum task bisa ditutup. Bisa lebih dari satu orang, misalnya Direktur dan IT Manager. Kalau tidak diisi, task langsung masuk antrian PMO setelah PIC mengajukan review.</p>`:''}
+    ${!par&&d0==='Legal'?`<label class="sw"><input type="checkbox" id="nt-res" ${(m.res!==undefined?m.res:S.set.legalRestricted)?'checked':''}> Terbatas (hanya PIC, Pengelola, Administrator)</label>`:''}
+    ${!par?`<label class="f">Sub task (opsional)<textarea id="nt-subs" class="in" rows="3" placeholder="Satu sub task per baris, contoh:
+Pengajuan form
+Pengadaan barang
+Pemasangan">${esc(m.subs||'')}</textarea></label><p class="sm mut">Satu baris = satu sub task. Ketik lalu Enter untuk baris baru, atau tempel beberapa baris sekaligus dari catatanmu. PIC dan tanggal diwariskan dari task ini dan bisa diubah lagi nanti per sub task.</p>`:''}
+    <div class="err" id="nt-err"></div>
+    <div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="ntSave">Simpan</button></div>`;
+  }else if(m.type==='tpl'){
+    const t=TEMPLATES.find(x=>x.id===m.id),cand=users.filter(x=>x.active);
+    inner=`<h2>${esc(t.name)}</h2><p class="sub">${t.subs.length} sub task akan dibuat berurutan sesuai durasinya.</p><div class="kv"><label>Mulai<input id="tp-s" class="in" type="date" value="${TODAY}"></label><label>PIC${picField('tp-pic-f',cand,'Ketik nama, atau nama tim')}</label><label>Project<select id="tp-proj" class="in">${options(S.projects.map(pr=>[pr.id,pr.code+' — '+pr.name]),S.project!=='Semua'?S.project:S.projects[0].id)}</select></label></div><div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="tplGo" data-id="${t.id}">Buat task</button></div>`;
+  }else if(m.type==='appr'){
+    const p=S.pending.find(x=>x.id===m.id);
+    inner=`<h2>Setujui ${esc(p.name)}</h2><p class="sub">${esc(p.email)}. Tentukan role-nya.</p><label class="f">Role<select id="ap-role" class="in">${options(ROLES,'Member')}</select></label>
+    <h4 style="margin-top:10px">Departemen (label jabatan, opsional)</h4>
+    <div class="kv">${DEPTS.map(d=>`<label class="sw" style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ap-dept-cb" value="${d.id}"> ${d.id}</label>`).join('')}</div>
+    <div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="apprGo" data-id="${p.id}">Setujui dan aktifkan</button></div>`;
+  }else if(m.type==='link'){
+    const u=users.find(x=>x.id===m.id);
+    inner=`<h2>Tautkan email ke ${esc(u.name)}</h2><p class="sub">Satu profil, banyak email. Pengguna dikenali lewat ID akun, bukan sekadar teks email.</p><label class="f">Email tambahan<input id="lk-email" class="in" type="email" data-enter="linkGo" data-id="${u.id}"></label><div class="err" id="lk-err"></div><div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="linkGo" data-id="${u.id}">Tautkan</button></div>`;
+  }else if(m.type==='daterange'){
+    const {y,mo,startWd,dim}=monthMeta(m.month);
+    const cells=[];
+    for(let i=0;i<startWd;i++)cells.push('');
+    for(let dnum=1;dnum<=dim;dnum++)cells.push(`${y}-${pad(mo+1)}-${pad(dnum)}`);
+    const inRange=d=>m.from&&m.to&&d>=m.from&&d<=m.to;
+    const wd=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    const grid=cells.map(d=>{
+      if(!d)return '<span></span>';
+      const cls=[d===TODAY?'today':'',(d===m.from||d===m.to)?'sel':'',inRange(d)?'rng':''].filter(Boolean).join(' ');
+      return `<button type="button" class="${cls}" data-a="drPick" data-d="${d}">${+d.slice(8,10)}</button>`;
+    }).join('');
+    const label=m.from?(m.to?`${fmtS(m.from)} – ${fmtS(m.to)}`:`Mulai ${fmtS(m.from)}. Klik tanggal akhir…`):'Klik tanggal mulai, lalu klik tanggal akhir.';
+    inner=`<h2>Filter tanggal</h2><p class="sub">${label}</p>
+    <div class="cal"><div class="hd"><button type="button" class="btn s" data-a="drPrev" aria-label="Bulan sebelumnya">‹</button><b>${MONF[mo]} ${y}</b><button type="button" class="btn s" data-a="drNext" aria-label="Bulan berikutnya">›</button></div>
+    <div class="wd">${wd.map(w=>`<div>${w}</div>`).join('')}</div>
+    <div class="gd">${grid}</div></div>
+    <div class="acts"><button class="btn dng sp" data-a="drClearAll">Hapus filter</button><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="drApply" ${m.from?'':'disabled'}>Terapkan</button></div>`;
+  }else if(m.type==='reassignPic'){
+    const t=byId(m.id);
+    const cand=users.filter(x=>x.active&&!picIds(t).includes(x.id));
+    inner=`<h2>Alihkan PIC</h2><p class="sub">${esc(t.title)}</p><p class="sm mut">PIC saat ini: ${esc(picNames(t))||'—'}. Pengalihan akan tercatat di riwayat task.</p>
+    <label class="f">PIC baru${picField('rp-pic-f',cand,'Ketik nama PIC baru…')}</label>
+    <div class="err" id="rp-err"></div>
+    <div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="reassignPicGo" data-id="${t.id}">Alihkan PIC</button></div>`;
+  }else if(m.type==='reviewReject'){
+    const t=byId(m.id);
+    inner=`<h2>Tolak (Reject)</h2><p class="sub">${esc(t.title)}</p><label class="f">Catatan alasan (wajib diisi)<textarea id="rj-note-${t.id}" class="in" rows="3" placeholder="Jelaskan apa yang perlu diperbaiki…"></textarea></label><div class="err" id="rj-err"></div><div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri dng" data-a="reviewDecide" data-id="${t.id}" data-dec="reject">Tolak task ini</button></div>`;
+  }else if(m.type==='editProject'){
+    const pr=S.projects.find(x=>x.id===m.id);
+    inner=`<h2>Edit Project</h2><label class="f">Nama<input id="pe-name" class="in" value="${esc(pr.name)}"></label><label class="f">Kode<input id="pe-code" class="in" value="${esc(pr.code)}" maxlength="6" style="text-transform:uppercase"></label><p class="sm mut">Mengubah kode akan mengubah nomor semua task di project ini (mis. dari OPS-1 jadi kode baru).</p><div class="err" id="pe-err"></div><div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="projEditSave" data-id="${pr.id}">Simpan</button></div>`;
+  }else if(m.type==='addUser'){
+    inner=`<h2>Tambah Pengguna</h2><p class="sub">Akun langsung aktif — tanpa menunggu tautan undangan diklik. Cocok untuk pendaftaran cepat lewat Administrator.</p>
+    <label class="f">Nama lengkap<input id="au-name" class="in" placeholder="mis. Yoga Saputra"></label>
+    <label class="f">Email<input id="au-email" class="in" type="email" placeholder="nama@perusahaan.co.id"></label>
+    <div class="kv"><label>Metode login<select id="au-via" class="in">${options([['Google','Google'],['Email','Email + password']],'Google')}</select></label><label>Role<select id="au-role" class="in">${options(ROLES,'Member')}</select></label></div>
+    <p class="sm mut">Departemen (label jabatan) diatur belakangan lewat halaman <b>Role dan departemen</b> — bukan di sini, supaya satu tempat saja jadi rujukan.</p>
+    <div class="err" id="au-err"></div>
+    <div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="addUserSave">Buat akun</button></div>`;
+  }else if(m.type==='editRoles'){
+    const eu=users.find(x=>x.id===m.id);
+    const ROLEDESC={Administrator:'Akses penuh ke semua departemen, semua task, dan pengaturan sistem — termasuk mengundang/menambah pengguna dan mengubah role orang lain.',Pengelola:'Akses penuh ke semua departemen dan semua task (buat, ubah, hapus, alihkan PIC, closing) — kecuali tidak bisa mengundang/menambah pengguna atau mengubah role orang lain.',Member:'Hanya bisa membuat dan memegang task untuk dirinya sendiri.',Guest:'Hanya bisa melihat, tidak bisa mengubah apa pun.'};
+    inner=`<h2>Role &amp; Akses</h2><p class="sub">${esc(eu.name)} · ${esc(eu.email)}</p>
+    <label class="f">Role<select class="in" id="re-role">${options(ROLES,eu.role)}</select></label>
+    <p class="sm mut" id="re-role-desc" style="margin-top:-6px">${ROLEDESC[eu.role]}</p>
+    <h4 style="margin-top:14px">Departemen (label jabatan, tidak memengaruhi akses)</h4>
+    <div class="kv">${DEPTS.map(d=>`<label class="sw" style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="re-dept-cb" value="${d.id}" ${(eu.depts||[]).includes(d.id)?'checked':''}> ${d.id}</label>`).join('')}</div>
+    <div class="err" id="re-err"></div>
+    <div class="acts"><button class="btn" data-a="mclose">Batal</button><button class="btn pri" data-a="rolesEditSave" data-id="${eu.id}">Simpan</button></div>`;
+  }
+  return `<div class="ov m" data-a="mclose"></div><div class="modal" role="dialog" aria-modal="true">${inner}</div>`;
+}
+
+/* ================= render ================= */
+function render(){
+  const act=document.activeElement,fid=act&&act.id,ss=act&&act.selectionStart,se=act&&act.selectionEnd;
+  const sels=['.main','.db','.gw','.ph-b','.tw','.kb'],sv=[];
+  sels.forEach(s=>document.querySelectorAll(s).forEach((el,i)=>sv.push([s,i,el.scrollTop,el.scrollLeft])));
+  NUM=buildNum();
+  $('#app').innerHTML=S.screen==='app'?shell():authScreen();
+  sv.forEach(([s,i,t,l])=>{const el=document.querySelectorAll(s)[i];if(el){el.scrollTop=t;el.scrollLeft=l}});
+  if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});try{el.setSelectionRange(ss,se)}catch(e){}}}
+}
+const go=r=>{S.route=r;S.openId=null;S.modal=null;render();const m=$('#main');if(m)m.scrollTop=0};
+
+/* ================= actions ================= */
+const val=id=>{const e=document.getElementById(id);return e?e.value:''};
+const A={
+  gopen(){S.modal={type:'gchoose'};render()},
+  dateFilterOpen(){S.modal={type:'daterange',month:ymOf(S.f.from),from:S.f.from,to:S.f.to};render()},
+  drPrev(){S.modal.month=addMonths(S.modal.month,-1);render()},
+  drNext(){S.modal.month=addMonths(S.modal.month,1);render()},
+  drPick(d){
+    const m=S.modal,day=d.d;
+    if(!m.from||m.to){m.from=day;m.to='';}
+    else if(day<m.from){m.to=m.from;m.from=day;}
+    else{m.to=day;}
+    render();
+  },
+  drClearAll(){S.modal.from='';S.modal.to='';render()},
+  drApply(){
+    S.f.from=S.modal.from;S.f.to=S.modal.to;
+    if(S.f.from)S.ganttStart=mondayOf(S.f.from);
+    S.modal=null;render();
+  },
+  gpick(d){S.modal=null;loginAs(d.id)},
+  mclose(){S.modal=null;render()},
+  login(){
+    const em=val('l-email').trim().toLowerCase(),pw=val('l-pass');
+    if(!em){S.err='Isi email dulu.';return render()}
+    if(S.fails>=5){S.err='Terlalu banyak percobaan. Coba lagi dalam 15 menit. (Batas percobaan login aktif.)';return render()}
+    const u=users.find(x=>x.email===em||x.extra.includes(em));
+    if(!u){
+      if(S.pending.some(p=>p.email===em)){S.waitEmail=em;S.screen='waiting';return render()}
+      S.err='Email ini belum diundang. Minta undangan atau ajukan akses.';return render();
+    }
+    if(pw.length<10){S.fails++;S.err='Password minimal 10 karakter.'+(S.fails>=3?` (${5-S.fails} percobaan tersisa)`:'');return render()}
+    S.fails=0;loginAs(u.id);
+  },
+  demo(d){loginAs(d.id)},
+  forgot(){toast('Tautan reset password dikirim ke email (simulasi).')},
+  toRequest(){S.screen='request';S.err='';render()},
+  toLogin(){S.screen='login';S.err='';S.modal=null;S.inv=null;render()},
+  twofa(){if(!/^\d{6}$/.test(val('tf').trim())){S.err='Kode harus 6 digit.';return render()}enter(S.tmp)},
+  twofaFill(){document.getElementById('tf').value='482913'},
+  request(){
+    const n=val('r-name').trim(),e=val('r-email').trim().toLowerCase();
+    if(!n||!/^\S+@\S+\.\S+$/.test(e)){S.err='Isi nama dan email yang valid.';return render()}
+    if(users.some(u=>u.email===e)){S.err='Email ini sudah punya akun. Silakan masuk.';return render()}
+    if(!S.pending.some(p=>p.email===e))S.pending.push({id:'p'+(++useq),name:n,email:e,at:nowStr()});
+    logEv('akses','Permintaan akses',e,n);S.waitEmail=e;S.screen='waiting';render();
+  },
+  openInvite(d){S.inv={id:d.id,step:1};S.screen='invite';S.err='';S.modal=null;render()},
+  invGoogle(){S.inv.mode='google';A.invFinish()},
+  invPass(){S.inv.step=2;S.err='';render()},
+  invPass2(){const a=val('iv-p1'),b=val('iv-p2');if(a.length<10){S.err='Password minimal 10 karakter.';return render()}if(a!==b){S.err='Kedua password harus sama.';return render()}S.inv.mode='pass';S.inv.step=3;S.err='';render()},
+  invFill(){document.getElementById('iv-code').value='739204'},
+  invVerify(){if(!/^\d{6}$/.test(val('iv-code').trim())){S.err='Kode harus 6 digit.';return render()}A.invFinish()},
+  invFinish(){
+    const iv=S.invites.find(i=>i.id===S.inv.id);iv.status='Diterima';
+    const nm=iv.email.split('@')[0].split(/[._]/).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+    const u=mkU('u'+(++useq),nm,iv.email,{role:iv.role,via:S.inv.mode==='google'?'Google':'Email'});
+    if(isExt(u))u.expires=addDays(TODAY,S.set.expiry*30);
+    users.push(u);logEv('undangan','Undangan diterima',`${iv.email} sebagai ${iv.role}`,u.name);
+    S.inv=null;toast('Email terverifikasi. Akunmu aktif.');enter(u.id);
+  },
+  logout(){S.me=null;S.screen='login';S.openId=null;S.modal=null;render()},
+  go(d){go(d.r)},
+  setDept(d){S.dept=d.d;render()},
+  filterDept(d){S.dept=d.d;if(d.r)S.route=d.r;render()},
+  open(d){S.openId=d.id;S.delArm=null;render()},
+  close(){S.openId=null;S.delArm=null;render()},
+  toggle(d){S.collapsed[d.id]=!S.collapsed[d.id];render()},
+  toggleG(d){S.cg[d.id]=!S.cg[d.id];render()},
+  gPrev(){S.ganttStart=addDays(S.ganttStart,-7);render()},gNext(){S.ganttStart=addDays(S.ganttStart,7);render()},gToday(){S.ganttStart=mondayOf(TODAY);render()},
+  fclear(){S.f.from='';S.f.to='';render()},
+  newTask(){if(!canCreateSelfTask())return deny();S.modal={type:'newTask',dept:S.dept!=='Semua'&&myDepts().some(d=>d.id===S.dept)?S.dept:(myDepts()[0]?myDepts()[0].id:DEPTS[0].id),reviewers:[]};render()},
+  newSub(d){S.modal={type:'newTask',parent:d.id};render()},
+  ntRevAdd(){
+    captureNewTaskForm();
+    const cand=users.filter(x=>x.active);
+    const r=resolvePicInput('nt-rev-f',cand);
+    if(!r||!r.uid)return toast('Pilih reviewer yang terdaftar dari daftar saran.','warn');
+    S.modal.reviewers=S.modal.reviewers||[];
+    if(!S.modal.reviewers.includes(r.uid))S.modal.reviewers.push(r.uid);
+    render();
+  },
+  ntRevDel(d){captureNewTaskForm();S.modal.reviewers.splice(+d.i,1);render()},
+  ntSave(){
+    const u0=me(),par=S.modal.parent?byId(S.modal.parent):null,selfOnly=par?u0.role==='Member':selfOnlyCreate(u0);
+    const title=val('nt-title').trim(),dept=par?par.dept:val('nt-dept'),s=val('nt-s'),e=val('nt-e');
+    const cand=users.filter(x=>x.active);
+    const pv=selfOnly?u0.id:(()=>{const pr=resolvePicInput('nt-pic-f',cand);return pr?(pr.uid||pr.team):''})();
+    const reviewers=(S.modal.reviewers||[]).slice();
+    const er=m=>{document.getElementById('nt-err').textContent=m};
+    if(!title)return er('Judul wajib diisi.');if(!s||!e)return er('Start dan End wajib diisi.');if(e<s)return er('End tidak boleh sebelum Start.');
+    if(!pv)return er('PIC wajib diisi.');
+    if(!par&&!canCreateTask()&&!(selfOnly&&myDepts().some(d=>d.id===dept)))return deny();
+    const resEl=document.getElementById('nt-res');
+    const t=newTask({dept,title,parent:par?par.id:null,pic:[pv].filter(Boolean),start:s,end:e,prio:val('nt-prio'),res:resEl?resEl.checked:false,reviewers,project:par?undefined:val('nt-proj')});
+    logEv('task','Membuat '+(par?'sub task':'task'),`${dept}: ${title}`);
+    const subsEl=document.getElementById('nt-subs');
+    let nSubs=0;
+    if(subsEl){
+      const lines=subsEl.value.split('\n').map(x=>x.trim()).filter(Boolean);
+      let cur=s;
+      lines.forEach(v=>{newTask({dept,title:v,parent:t.id,pic:[pv].filter(Boolean),start:cur,end:addDays(cur,3)});cur=addDays(cur,3);nSubs++});
+      if(nSubs)logEv('task','Menambah sub task sekaligus',`${dept}: ${title} — ${nSubs} sub task`);
+    }
+    S.modal=null;toast('Task dibuat dengan nomor '+(buildNum()[t.id]||'—')+' (otomatis).'+(nSubs?' '+nSubs+' sub task ikut dibuat.':''));
+    if(par)S.openId=par.id;render();
+  },
+  useTpl(d){S.modal={type:'tpl',id:d.id};render()},
+  tplGo(d){
+    const tp=TEMPLATES.find(x=>x.id===d.id),s=val('tp-s')||TODAY;
+    const cand=users.filter(x=>x.active);
+    const pr=resolvePicInput('tp-pic-f',cand),pic=pr?(pr.uid||pr.team):'';
+    const total=tp.subs.reduce((a,x)=>a+x[1],0);
+    const p=newTask({dept:tp.dept,title:tp.name,pic:pic?[pic]:[],start:s,end:addDays(s,total-1),prio:tp.prio,res:tp.dept==='Legal'&&S.set.legalRestricted,seq:tp.seq,project:val('tp-proj')});
+    let cur=s;tp.subs.forEach(([n,dur])=>{newTask({dept:tp.dept,title:n,parent:p.id,pic:pic?[pic]:[],start:cur,end:addDays(cur,dur-1)});cur=addDays(cur,dur)});
+    logEv('task','Membuat task dari template',`${tp.dept}: ${tp.name}`);S.modal=null;S.route='jadwal';S.dept=tp.dept;S.openId=p.id;toast('Task dan '+tp.subs.length+' sub task dibuat dari template.');render();
+  },
+  comment(d){const t=byId(d.id),v=val('cm-in').trim();if(!v)return;if(!canComment(t))return deny();t.comments.push({uid:S.me,text:v,at:'21 Sep, '+hhmm()});hist(t,'Menambah komentar');notify('status',t,`${me().name} berkomentar di "${t.title}"`,[...picIds(t),...mgrIds(t.dept)]);render()},
+  picAdd(d){
+    const t=byId(d.id);if(!(t.parent?canEdit(t):isPMO()))return deny();
+    const picOpts=users.filter(x=>x.active&&!picIds(t).includes(x.id));
+    const r=resolvePicInput('pic-add-'+t.id,picOpts);
+    if(!r)return toast('Pilih orang atau isi nama tim.','warn');
+    if(r.uid){const u=users.find(x=>x.id===r.uid);t.pic.push({uid:r.uid});t.picHistory=t.picHistory||[];t.picHistory.push({from:null,to:r.uid,at:nowStr(),by:me().name});hist(t,'PIC ditambah: '+u.name);notify('assign',t,`Kamu ditugaskan pada "${t.title}"`,[r.uid])}
+    else{t.pic.push({team:r.team});hist(t,'PIC tim ditambah: '+r.team)}
+    if(t.restricted)logEv('task','Ubah task terbatas',`${t.dept}: ${t.title} (PIC)`);render();
+  },
+  picDel(d){const t=byId(d.id);if(!(t.parent?canEdit(t):isPMO()))return deny();const p=t.pic.splice(+d.i,1)[0];hist(t,'PIC dihapus: '+(p.team||uname(p.uid)));render()},
+  picQuickToggle(d){S.picEditId=S.picEditId===d.id?null:d.id;render()},
+  picQuickAdd(d){
+    const c=byId(d.id);if(!canEdit(c))return deny();
+    const cand=users.filter(x=>x.active&&!picIds(c).includes(x.id));
+    const r=resolvePicInput('pq-'+d.id,cand);
+    if(!r)return;
+    if(r.uid){const u=users.find(x=>x.id===r.uid);c.pic.push({uid:r.uid});hist(c,'PIC ditambah: '+u.name);notify('assign',c,`Kamu ditugaskan pada "${c.title}"`,[r.uid])}
+    else{c.pic.push({team:r.team});hist(c,'PIC tim ditambah: '+r.team)}
+    S.picEditId=null;render();toast('PIC ditambahkan');
+  },
+  setProject(d){S.project=d.d;render()},
+  projectAdd(){
+    if(!me().admin)return deny();
+    const v=val('proj-new').trim();if(!v)return;
+    let code=val('proj-code').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(!code){
+      const words=v.split(/\s+/).filter(Boolean);
+      if(words.length>1){
+        let init=words.map(w=>w[0]).join('').toUpperCase();
+        code=init.length<3?(words[0].slice(0,3-words.length+1)+words.slice(1).map(w=>w[0]).join('')).toUpperCase():init.slice(0,5);
+      }else code=v.slice(0,3).toUpperCase();
+    }
+    if(S.projects.some(p=>p.code===code))code=code+S.projects.length;
+    const id='proj_'+Date.now().toString(36);
+    S.projects.push({id,name:v,code});
+    logEv('project','Menambah project',`${v} (${code})`,me().name);
+    document.getElementById('proj-new').value='';document.getElementById('proj-code').value='';render();toast('Project "'+v+'" ditambahkan dengan kode '+code+'.');
+  },
+  submitReview(d){doSubmitReview(d)},
+  startWork(d){
+    const t=byId(d.id);if(!canEdit(t))return deny();
+    if(t.status!=='To do')return;
+    applyField(t.id,'status','On Progress');
+    toast('Task dipindah ke On Progress.');
+  },
+  finishSub(d){
+    const t=byId(d.id);if(!canEdit(t))return deny();
+    if(!t.parent)return toast('Task induk hanya bisa Done lewat closing PMO.','warn');
+    if(t.status!=='On Progress')return;
+    applyField(t.id,'status','Done');
+    toast('Sub task ditandai selesai.');
+  },
+  reviewDecideOpen(d){
+    if(d.dec==='reject'){S.modal={type:'reviewReject',id:d.id};render();return}
+    doReviewDecide({id:d.id,dec:'accept'});
+  },
+  reviewDecide(d){doReviewDecide(d)},
+  reassignPicOpen(d){
+    const t=byId(d.id);if(!isPMO())return deny();
+    S.modal={type:'reassignPic',id:d.id};render();
+  },
+  reassignPicGo(d){
+    const t=byId(d.id),u=me();if(!isPMO())return deny();
+    const cand=users.filter(x=>x.active&&!picIds(t).includes(x.id));
+    const r=resolvePicInput('rp-pic-f',cand);
+    if(!r||!r.uid){document.getElementById('rp-err').textContent='Pilih PIC baru yang terdaftar dari daftar saran.';return}
+    const oldNames=picNames(t)||'(belum ada)';
+    t.picHistory=t.picHistory||[];
+    t.picHistory.push({from:picIds(t)[0]||null,to:r.uid,at:nowStr(),by:u.name});
+    t.pic=[{uid:r.uid}];
+    let note=`PIC dialihkan oleh ${u.name}: ${oldNames} → ${uname(r.uid)}`;
+    if(t.status==='On Review'||t.status==='Revisi'){
+      t.status='On Progress';t.reviewers=(t.reviewers||[]).map(x=>({uid:x.uid,decision:null,note:'',at:null}));t.reviewApproved=false;
+      note+=' — dikembalikan ke On Progress karena PIC baru perlu memulai ulang';
+    }
+    hist(t,note);
+    logEv('task','PIC dialihkan',`${t.dept}: ${t.title} — ${oldNames} → ${uname(r.uid)}`,u.name);
+    notify('assign',t,`Kamu dialihkan sebagai PIC untuk "${t.title}" oleh ${u.name}`,[r.uid]);
+    S.modal=null;render();toast('PIC dialihkan.');
+  },
+  pmoCloseDirect(d){
+    const t=byId(d.id),u=me();if(!(u.admin||u.role==='Pengelola'))return deny();
+    const old=t.status;t.status='Done';t.progress=100;t.doneOn=TODAY;t.closeVia='langsung';
+    afterChange(t,old,'Closing langsung oleh PMO ('+u.name+')');
+    logEv('review','Task di-closing PMO (langsung, tanpa buka detail)',`${t.dept}: ${t.title}`,u.name);
+    render();toast('Task ditutup (closing langsung).');
+  },
+  pmoCloseReview(d){
+    const t=byId(d.id),u=me();if(!(u.admin||u.role==='Pengelola'))return deny();
+    const old=t.status;t.status='Done';t.progress=100;t.doneOn=TODAY;t.closeVia='tinjau';
+    afterChange(t,old,'Closing setelah ditinjau PMO ('+u.name+')');
+    logEv('review','Task di-closing PMO (tinjau detail dulu)',`${t.dept}: ${t.title}`,u.name);
+    render();toast('Task ditutup setelah ditinjau.');
+  },
+  fileDel(d){
+    const t=byId(d.id);if(!canEdit(t))return deny();
+    const a=t.attachments.splice(+d.i,1)[0];
+    hist(t,'Lampiran dihapus: '+a.name);
+    logEv('task','Lampiran dihapus',`${t.dept}: ${t.title} — ${a.name}`);
+    render();
+  },
+  subAdd(d){
+    const p=byId(d.id),u=me();const raw=val('sub-in');if(!raw.trim())return;if(!canEdit(p))return deny();
+    const titles=raw.split('\n').map(x=>x.trim()).filter(Boolean);
+    const pic=u.role==='Member'?[u.id]:picIds(p);
+    let s=(kids(p.id).pop()||{}).end||p.start||TODAY;
+    titles.forEach(v=>{newTask({dept:p.dept,title:v,parent:p.id,pic,start:s,end:addDays(s,3)});hist(p,'Sub task ditambah: '+v);s=addDays(s,3)});
+    toast(titles.length>1?titles.length+' sub task ditambahkan sekaligus.':'Sub task ditambahkan.');render();
+  },
+  delTask(d){
+    const t=byId(d.id);if(!(t.parent?canEdit(t):(isMgr(me(),t.dept)||isPMO())))return deny();
+    if(S.delArm!==d.id){S.delArm=d.id;return render()}
+    const ids=[t.id,...kids(t.id).map(k=>k.id)];logEv('hapus','Menghapus '+(t.parent?'sub task':'task'),`${t.dept}: ${t.title}`);
+    const pid=t.parent;for(let i=tasks.length-1;i>=0;i--)if(ids.includes(tasks[i].id))tasks.splice(i,1);
+    if(pid){recalc(pid);touch(byId(pid))}S.openId=pid||null;S.delArm=null;toast('Dihapus dan tercatat di log aktivitas.');render();
+  },
+  impPick(){S.imp={stage:'preview',res:{},dateFmt:null};render()},
+  impTpl(){toast('Simulasi: template .xlsx terunduh.')},
+  impErr(){toast('Simulasi: laporan error per baris terunduh.')},
+  impCancel(){S.imp={stage:'upload',res:{},dateFmt:null};render()},
+  impAgain(){S.imp={stage:'upload',res:{},dateFmt:null};render()},
+  impSkip(d){const r=S.imp.res[d.i]||(S.imp.res[d.i]={});r.skip=true;render()},
+  impUnskip(d){const r=S.imp.res[d.i]||(S.imp.res[d.i]={});r.skip=false;render()},
+  impGo(){impDo();render()},
+  batchCancel(d){
+    const b=S.batches.find(x=>x.id===d.id);let n=0;
+    for(let i=tasks.length-1;i>=0;i--)if(tasks[i].batch===d.id){tasks.splice(i,1);n++}
+    tasks.filter(t=>!t.parent).forEach(t=>recalc(t.id));S.synced=hhmm();b.status='Dibatalkan';logEv('import','Batch dibatalkan',`${b.id}: ${n} task dihapus`);toast(`Batch ${b.id} dibatalkan: ${n} task dihapus.`);render();
+  },
+  repTab(d){S.rep.tab=d.t;render()},
+  repXlsx(){toast('Simulasi: file .xlsx berisi '+repRows().length+' baris terunduh.')},
+  repCsv(){const url='https://contoh.app/data/tasks.csv?token=…';try{navigator.clipboard.writeText(url)}catch(e){}toast('Alamat data disalin (simulasi). Pakai di Excel lewat Power Query.')},
+  repSheets(){toast('Simulasi: membuka Google Sheets yang tersinkron.')},
+  repSync(){S.synced=hhmm();render();toast('Tersinkron.')},
+  readAll(){S.notifs.filter(n=>n.uid===S.me).forEach(n=>n.read=true);render()},
+  desktopTest(){
+    if(typeof Notification==='undefined'||Notification.permission!=='granted')return toast('Izin notifikasi browser belum diberikan.','warn');
+    new Notification('Task Management',{body:'Ini contoh notifikasi. Kalau kamu lihat dan dengar ini, fiturnya jalan.'});
+    playBeep();
+  },
+  openNotif(d){const n=S.notifs.find(x=>x.id===d.id);n.read=true;const t=n.tid?byId(n.tid):null;if(t&&canSee(t)){S.openId=t.id}render()},
+  openNotifA(d){const n=S.notifs.find(x=>x.id===d.id);n.read=true;if(n.tid&&byId(n.tid)&&canSee(byId(n.tid)))S.and.sheet=n.tid;render()},
+  uToggle(d){
+    const u=users.find(x=>x.id===d.id);
+    if(u.active&&lastAdmin(u))return toast('Administrator terakhir tidak bisa dinonaktifkan. Tambah Administrator lain dulu.','er');
+    if(u.id===S.me&&u.active)return toast('Kamu tidak bisa menonaktifkan akunmu sendiri.','warn');
+    u.active=!u.active;logEv('akses',u.active?'Akun diaktifkan':'Akun dinonaktifkan',u.name);render();
+  },
+  uLink(d){S.modal={type:'link',id:d.id};render()},
+  linkGo(d){
+    const e=val('lk-email').trim().toLowerCase(),er=m=>{document.getElementById('lk-err').textContent=m};
+    if(!/^\S+@\S+\.\S+$/.test(e))return er('Email tidak valid.');if(users.some(u=>u.email===e||u.extra.includes(e)))return er('Email ini sudah terpakai profil lain.');
+    const u=users.find(x=>x.id===d.id);u.extra.push(e);logEv('akses','Email ditautkan',`${e} → ${u.name}`);S.modal=null;render();
+  },
+  uExtend(d){const u=users.find(x=>x.id===d.id);u.expires=addDays(TODAY,S.set.expiry*30);logEv('akses','Akses diperpanjang',`${u.name} sampai ${fmt(u.expires)}`);toast('Akses diperpanjang sampai '+fmt(u.expires)+'.');render()},
+  invSend(){
+    if(!me().admin)return deny();
+    const e=val('iv-email').trim().toLowerCase(),role=val('iv-role');
+    if(!/^\S+@\S+\.\S+$/.test(e))return toast('Isi email yang valid.','warn');
+    if(users.some(u=>u.email===e||u.extra.includes(e)))return toast('Email ini sudah punya akun.','warn');
+    if(S.invites.some(i=>i.email===e&&i.status==='Menunggu'))return toast('Email ini sudah punya undangan yang menunggu.','warn');
+    S.invites.unshift({id:'i'+(++useq),email:e,role,by:S.me,exp:addDays(TODAY,7),status:'Menunggu'});
+    logEv('undangan','Undangan dikirim',`${e} sebagai ${role}`);toast('Undangan dikirim ke '+e+'.');render();
+  },
+  invResend(d){const i=S.invites.find(x=>x.id===d.id);i.exp=addDays(TODAY,7);toast('Undangan dikirim ulang. Berlaku sampai '+fmt(i.exp)+'.');render()},
+  invRevoke(d){const i=S.invites.find(x=>x.id===d.id);i.status='Dibatalkan';logEv('undangan','Undangan dibatalkan',i.email);render()},
+  apprOpen(d){if(!DEPTS.some(x=>isMgr(me(),x.id)))return toast('Kamu perlu jadi Manager untuk menyetujui.','warn');S.modal={type:'appr',id:d.id};render()},
+  apprGo(d){
+    if(!me().admin)return deny();
+    const p=S.pending.find(x=>x.id===d.id),role=val('ap-role');
+    const depts=Array.from(document.querySelectorAll('.ap-dept-cb:checked')).map(x=>x.value);
+    const u=mkU('u'+(++useq),p.name,p.email,{role,depts,via:'Email'});if(isExt(u))u.expires=addDays(TODAY,S.set.expiry*30);
+    users.push(u);S.pending=S.pending.filter(x=>x.id!==d.id);logEv('akses','Permintaan disetujui',`${p.email} sebagai ${role}${depts.length?' · '+depts.join(', '):''}`);S.modal=null;toast(p.name+' sekarang aktif sebagai '+role+'.');render();
+  },
+  apprReject(d){const p=S.pending.find(x=>x.id===d.id);S.pending=S.pending.filter(x=>x.id!==d.id);logEv('akses','Permintaan ditolak',p.email);render()},
+  andTab(d){S.and.tab=d.t;S.and.sheet=null;render()},
+  andOpen(d){S.and.sheet=d.id;S.and.banner=null;render()},
+  andClose(){S.and.sheet=null;render()},
+  andStatus(d){applyField(d.id,'status',d.s)},
+  andPush(){
+    const u=me();if(u.role==='Guest')return toast('Guest tidak menerima penugasan task.','warn');
+    const dept=(u.depts&&u.depts[0])||DEPTS[0].id;
+    const titles=['Cek kartu akses lantai 2','Konfirmasi jadwal maintenance AC','Tandatangani berita acara serah terima'];
+    const title=titles[tasks.length%titles.length];
+    const t=newTask({dept,title,pic:[S.me],start:TODAY,end:addDays(TODAY,2),prio:'Medium'});
+    S.notifs.unshift({id:'n'+(++nseq),uid:S.me,type:'assign',tid:t.id,text:`Kamu ditugaskan pada "${title}"`,at:'21 Sep, '+hhmm(),read:false});
+    logEv('task','Membuat task (simulasi push)',`${dept}: ${title}`);
+    S.and.banner={text:`Task baru untukmu: ${title}`,tid:t.id};render();
+    setTimeout(()=>{if(S.and.banner&&S.and.banner.tid===t.id){S.and.banner=null;render()}},4500);
+  },
+  projEditOpen(d){if(!me().admin)return deny();S.modal={type:'editProject',id:d.id};render()},
+  projEditSave(d){
+    if(!me().admin)return deny();
+    const pr=S.projects.find(x=>x.id===d.id);
+    const name=val('pe-name').trim();let code=val('pe-code').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const er=m=>{document.getElementById('pe-err').textContent=m};
+    if(!name)return er('Nama wajib diisi.');if(!code)return er('Kode wajib diisi.');
+    if(S.projects.some(x=>x.id!==pr.id&&x.code===code))return er('Kode ini sudah dipakai project lain.');
+    const oldName=pr.name,oldCode=pr.code;pr.name=name;pr.code=code;
+    logEv('project','Mengubah Project',`${oldCode} ${oldName} → ${code} ${name}`,me().name);
+    S.modal=null;render();toast('Project diperbarui.');
+  },
+  projDelete(d){
+    if(!me().admin)return deny();
+    const n=tasks.filter(t=>!t.parent&&t.project===d.id).length;
+    if(n)return toast('Masih ada '+n+' task di project ini, tidak bisa dihapus.','warn');
+    const pr=S.projects.find(x=>x.id===d.id);
+    S.projects=S.projects.filter(x=>x.id!==d.id);
+    logEv('project','Menghapus Project',`${pr.code} ${pr.name}`,me().name);
+    if(S.project===d.id)S.project='Semua';
+    render();toast('Project dihapus.');
+  },
+  addUserOpen(){if(!me().admin)return deny();S.modal={type:'addUser'};render()},
+  addUserSave(){
+    if(!me().admin)return deny();
+    const name=val('au-name').trim(),email=val('au-email').trim().toLowerCase(),via=val('au-via'),role=val('au-role');
+    const er=m=>{document.getElementById('au-err').textContent=m};
+    if(!name)return er('Nama wajib diisi.');
+    if(!/^\S+@\S+\.\S+$/.test(email))return er('Isi email yang valid.');
+    if(users.some(u=>u.email===email||u.extra.includes(email)))return er('Email ini sudah punya akun.');
+    const u=mkU('u'+(++useq),name,email,{via,role});
+    if(isExt(u))u.expires=addDays(TODAY,S.set.expiry*30);
+    users.push(u);
+    logEv('akses','Pengguna ditambahkan langsung',`${email} sebagai ${role}`);
+    S.modal=null;render();toast(name+' ditambahkan dan langsung aktif. Atur departemen lewat Role dan departemen.');
+  },
+  rolesEditOpen(d){if(!me().admin)return deny();S.modal={type:'editRoles',id:d.id};render()},
+  rolesEditSave(d){
+    if(!me().admin)return deny();
+    const u=users.find(x=>x.id===d.id);
+    const er=m=>{document.getElementById('re-err').textContent=m};
+    const newRole=val('re-role');
+    if(u.role==='Administrator'&&newRole!=='Administrator'&&lastAdmin(u))return er('Administrator terakhir tidak bisa diturunkan. Tambah Administrator lain dulu.');
+    const wasRole=u.role;
+    u.role=newRole;u.admin=newRole==='Administrator';
+    u.depts=Array.from(document.querySelectorAll('.re-dept-cb:checked')).map(x=>x.value);
+    logEv('role','Perubahan role & akses',`${u.name}: ${wasRole} → ${newRole}${u.depts.length?' · '+u.depts.join(', '):''}`);
+    S.modal=null;render();toast('Role dan akses diperbarui.');
+  }
+};
+const C={
+  switch(el){if(!el.value)return;const id=el.value;S.me=id;S.route='beranda';S.dept='Semua';S.openId=null;S.modal=null;S.and={tab:'task',sheet:null,banner:null};toast('Simulasi: sekarang sebagai '+uname(id)+' ('+roleLabel(users.find(u=>u.id===id))+').');render()},
+  q(el){S.f.q=el.value;render()},fpic(el){S.f.pic=el.value;render()},fprio(el){S.f.prio=el.value;render()},fdue(el){S.f.due=el.value;render()},
+  jwcol(el){S.jwCols[el.dataset.k]=el.checked;render()},
+  gjump(el){if(el.value)S.ganttStart=mondayOf(el.value);render()},
+  mv(el){applyField(el.dataset.id,'status',el.value)},
+  prog(el){applyField(el.dataset.id,'progress',el.value)},status(el){applyField(el.dataset.id,'status',el.value)},
+  prio(el){applyField(el.dataset.id,'prio',el.value)},start(el){applyField(el.dataset.id,'start',el.value)},end(el){applyField(el.dataset.id,'end',el.value)},
+  remarks(el){applyField(el.dataset.id,'remarks',el.value)},title(el){applyField(el.dataset.id,'title',el.value)},
+  restr(el){applyField(el.dataset.id,'restricted',el.checked)},seq(el){applyField(el.dataset.id,'sequential',el.checked)},
+  wkc(el){S.wkColor=el.checked;render()},period(el){S.rep.period=el.value;render()},
+  unread(el){S.notifOnlyUnread=el.checked;render()},
+  pref(el){me().prefs[el.dataset.k]=el.checked;toast(el.checked?'Notifikasi diaktifkan.':'Notifikasi dimatikan.')},
+  logf(el){S.logF=el.value;render()},
+  ntDept(el){captureNewTaskForm();S.modal.dept=el.value;render()},
+  deptSel(el){S.dept=el.value;render()},
+  desktopToggle(el){
+    S.set.desktopNotif=el.checked;
+    if(el.checked&&typeof Notification!=='undefined'&&Notification.permission==='default'){
+      Notification.requestPermission().then(perm=>{
+        if(perm!=='granted'){toast('Izin notifikasi browser ditolak. Nyalakan lewat pengaturan browser kalau berubah pikiran.','warn')}
+        render();
+      });
+    }
+    render();
+  },
+  fileUp(el){
+    const t=byId(el.dataset.id);if(!canEdit(t))return deny();
+    const files=Array.from(el.files||[]);if(!files.length)return;
+    let remaining=files.length;
+    files.forEach(f=>{
+      if(f.size>3*1024*1024){toast(f.name+' terlalu besar (maks 3 MB).','warn');remaining--;if(remaining===0)render();return}
+      const reader=new FileReader();
+      reader.onload=()=>{
+        t.attachments=t.attachments||[];
+        t.attachments.push({name:f.name,size:f.size,data:reader.result,by:me().name,at:nowStr()});
+        hist(t,'Lampiran ditambahkan: '+f.name);
+        remaining--;
+        if(remaining===0){render();toast('Lampiran diunggah.')}
+      };
+      reader.readAsDataURL(f);
+    });
+  },
+  projSel(el){S.project=el.value;render()},
+  projChange(el){
+    const t=byId(el.dataset.id);if(!isPMO())return deny();
+    if(t.parent)return;
+    const old=projName(t.project);t.project=el.value;
+    hist(t,'Project dipindahkan: '+old+' → '+projName(t.project));
+    logEv('project','Task dipindahkan ke project lain',`${t.dept}: ${t.title} — ${old} → ${projName(t.project)}`,me().name);
+    render();toast('Project dipindahkan.');
+  },
+  dfmt(el){S.imp.dateFmt=el.value;render()},
+  impPic(el){const r=S.imp.res[el.dataset.i]||(S.imp.res[el.dataset.i]={});r.pic=el.value;render()},
+  impConf(el){const r=S.imp.res[el.dataset.i]||(S.imp.res[el.dataset.i]={});r.conf=el.value;render()},
+  set(el){
+    S.set[el.dataset.k]=el.checked;
+    if(el.dataset.k==='weighted')tasks.filter(t=>!t.parent).forEach(t=>recalc(t.id));
+    logEv('pengaturan','Pengaturan diubah',`${el.dataset.k} = ${el.checked?'nyala':'mati'}`);
+    toast(el.dataset.k==='weighted'?'Progress induk dihitung ulang ('+(el.checked?'berbobot durasi':'jumlah sub task selesai')+').':'Pengaturan disimpan.');render();
+  },
+  expiry(el){S.set.expiry=+el.value;logEv('pengaturan','Masa berlaku akses eksternal',el.value+' bulan');toast('Disimpan. Berlaku untuk akun eksternal baru.')},
+  andProg(el){applyField(el.dataset.id,'progress',el.value)},
+  andSub(el){applyField(el.dataset.id,'status',el.checked?'Done':'To do')}
+};
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-a]');if(!a)return;
+  if(e.target!==a&&e.target.closest('select,input,textarea')&&!a.matches('select,input,textarea'))return;
+  if(a.matches('.ov')&&e.target!==a)return;
+  const fn=A[a.dataset.a];if(fn)fn({...a.dataset});
+});
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-c]');if(!el)return;
+  const fn=C[el.dataset.c];if(fn)fn(el);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){const el=e.target.closest('[data-enter]');if(el&&A[el.dataset.enter]){e.preventDefault();A[el.dataset.enter]({...el.dataset})}}
+  if(e.key==='Escape'){if(S.modal){S.modal=null;render()}else if(S.openId){S.openId=null;render()}}
+});
+/* drag and drop */
+let dragId=null;
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('[data-card]');if(!c)return;dragId=c.dataset.card;try{e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move'}catch(x){}});
+document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('[data-col]');if(!c||!dragId)return;e.preventDefault();document.querySelectorAll('.kc.over').forEach(x=>x!==c&&x.classList.remove('over'));c.classList.add('over')});
+document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('[data-col]');if(c&&!c.contains(e.relatedTarget))c.classList.remove('over')});
+document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('[data-col]');if(!c||!dragId)return;e.preventDefault();const id=dragId;dragId=null;applyField(id,'status',c.dataset.col)});
+document.addEventListener('dragend',()=>{dragId=null;document.querySelectorAll('.kc.over').forEach(x=>x.classList.remove('over'))});
+render();
+})();
+</script>
+</body>
+</html>
